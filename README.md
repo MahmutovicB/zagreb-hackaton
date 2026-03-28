@@ -13,11 +13,11 @@ We are building a software solution for the **Cursor hackathon in Zagreb**, on t
 
 Implementation details, APIs, and file layout are documented in **PLAN.md**.
 
-## Team
+## Meet our team
 
-We are from **Sarajevo**:
+We are from **Sarajevo**: two Computer Science students at different local universities, and a professional Swift / iOS developer.
 
-- [Hamza Miladin](https://www.linkedin.com/in/hamza-miladin-5a4105264/)
-- [Benjamin Mahmutovic](https://www.linkedin.com/in/benjodev/)
-- [Anes Djumisic](https://www.linkedin.com/in/anes-djumisic/)
+- **[Hamza Miladin](https://www.linkedin.com/in/hamza-miladin-5a4105264/)** — Swift developer at [Symphony](https://symphony.is).
+- **[Benjamin Mahmutovic](https://www.linkedin.com/in/benjodev/)** — Computer Science student, **International Burch University**, Sarajevo.
+- **[Anes Djumisic](https://www.linkedin.com/in/anes-djumisic/)** — Computer Science student, **Faculty of Electrical Engineering**, **University of Sarajevo**.
 
