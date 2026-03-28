@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp, Search, Sparkles } from 'lucide-react'
@@ -101,10 +101,11 @@ function ResultsContent() {
   const [radarWorks, setRadarWorks] = useState<KomunalniWork[]>([])
   const [kindergartens, setKindergartens] = useState<Kindergarten[]>([])
   const [filterText, setFilterText] = useState('')
-  const [neighborhoodFilter, setNeighborhoodFilter] = useState<'best' | 'top3' | 'all'>('all')
+  const [neighborhoodFilter, setNeighborhoodFilter] = useState<'best' | 'top3' | 'all'>('top3')
   const [layers, setLayers] = useState<MapLayers>({
     radar: false, transit: false, kindergartens: false, airQuality: false, cycling: false,
   })
+  const cardRefsMap = useRef<Map<string, HTMLDivElement>>(new Map())
 
   useEffect(() => {
     if (!query) return
@@ -128,6 +129,13 @@ function ResultsContent() {
     fetch('/api/radar').then(r => r.json()).then(d => setRadarWorks(d.works ?? []))
     fetch('/api/kindergartens').then(r => r.json()).then(d => setKindergartens(d.kindergartens ?? []))
   }, [])
+
+  // Scroll the selected card into view whenever selection changes
+  useEffect(() => {
+    if (!selectedId) return
+    const el = cardRefsMap.current.get(selectedId)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [selectedId])
 
   const toggleLayer = useCallback((key: keyof MapLayers) => {
     setLayers(prev => ({ ...prev, [key]: !prev[key] }))
@@ -307,14 +315,15 @@ function ResultsContent() {
               )}
 
               {filteredNeighborhoods.slice(0, 3).map((n, i) => (
-                <NeighborhoodCard
-                  key={n.id}
-                  neighborhood={n}
-                  rank={i + 1}
-                  selected={selectedId === n.id}
-                  onSelect={() => setSelectedId(n.id)}
-                  onShowApartments={() => setApartmentNeighborhood(n)}
-                />
+                <div key={n.id} ref={el => { if (el) cardRefsMap.current.set(n.id, el) }}>
+                  <NeighborhoodCard
+                    neighborhood={n}
+                    rank={i + 1}
+                    selected={selectedId === n.id}
+                    onSelect={() => setSelectedId(n.id)}
+                    onShowApartments={() => setApartmentNeighborhood(n)}
+                  />
+                </div>
               ))}
 
               {filteredNeighborhoods.length > 3 && (
@@ -331,14 +340,15 @@ function ResultsContent() {
               )}
 
               {filteredNeighborhoods.slice(3).map((n, i) => (
-                <NeighborhoodCard
-                  key={n.id}
-                  neighborhood={n}
-                  rank={i + 4}
-                  selected={selectedId === n.id}
-                  onSelect={() => setSelectedId(n.id)}
-                  onShowApartments={() => setApartmentNeighborhood(n)}
-                />
+                <div key={n.id} ref={el => { if (el) cardRefsMap.current.set(n.id, el) }}>
+                  <NeighborhoodCard
+                    neighborhood={n}
+                    rank={i + 4}
+                    selected={selectedId === n.id}
+                    onSelect={() => setSelectedId(n.id)}
+                    onShowApartments={() => setApartmentNeighborhood(n)}
+                  />
+                </div>
               ))}
 
               <div className="h-4" />
@@ -390,7 +400,7 @@ function ResultsContent() {
                   onClick={() => setNeighborhoodFilter(opt)}
                   className={`px-3 py-1.5 text-[11px] font-semibold tracking-wide transition-colors ${i > 0 ? 'border-l border-white/8' : ''} ${neighborhoodFilter === opt ? 'bg-[#D4764A] text-white' : 'text-white/50 hover:text-white/80'}`}
                 >
-                  {opt === 'best' ? 'Top 1' : opt === 'top3' ? 'Top 3' : 'All'}
+                  {opt === 'best' ? 'Top 1' : opt === 'top3' ? 'Top 3' : 'Svi'}
                 </button>
               ))}
             </div>

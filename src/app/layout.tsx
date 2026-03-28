@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans } from "next/font/google";
+import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Preloader from "@/components/Preloader";
 
-const syne = Syne({
-  variable: "--font-syne",
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "700", "800"],
+  axes: ["SOFT", "WONK"],
+  weight: "variable",
   display: "swap",
 });
 
@@ -29,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="hr" suppressHydrationWarning>
-      <body className={`${syne.variable} ${dmSans.variable} antialiased font-[var(--font-dm)]`}>
+      <body className={`${fraunces.variable} ${dmSans.variable} antialiased font-[var(--font-dm)]`}>
         <Preloader />
         {children}
       </body>

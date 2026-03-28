@@ -87,11 +87,65 @@ function injectDarkInfoWindows() {
   document.head.appendChild(s)
 }
 
-function scoreToColor(score: number): { fill: string; stroke: string } {
-  if (score >= 75) return { fill: 'rgba(34,197,94,0.22)', stroke: '#22c55e' }
-  if (score >= 50) return { fill: 'rgba(234,179,8,0.22)', stroke: '#eab308' }
-  if (score >= 25) return { fill: 'rgba(249,115,22,0.22)', stroke: '#f97316' }
-  return { fill: 'rgba(239,68,68,0.22)', stroke: '#ef4444' }
+/**
+ * Generate wobbly circle lat/lng points — layered sine waves create
+ * organic inconsistencies that look hand-drawn.
+ */
+function handDrawnPoints(
+  center: { lat: number; lng: number },
+  radiusM: number,
+  seed: number,
+): google.maps.LatLngLiteral[] {
+  const N = 72
+  const latDeg = radiusM / 111320
+  const lngDeg = radiusM / (111320 * Math.cos((center.lat * Math.PI) / 180))
+  return Array.from({ length: N }, (_, i) => {
+    const a = (i / N) * Math.PI * 2 - Math.PI / 2
+    const wobble =
+      Math.sin(a * 2.1 + seed * 0.83) * 0.055 +
+      Math.sin(a * 5.3 + seed * 1.61) * 0.028 +
+      Math.sin(a * 9.7 + seed * 3.14) * 0.012 +
+      Math.sin(a * 17.3 + seed * 0.57) * 0.005
+    const r = 1 + wobble
+    return { lat: center.lat + r * latDeg * Math.sin(a), lng: center.lng + r * lngDeg * Math.cos(a) }
+  })
+}
+
+function scoreColor(score: number): string {
+  if (score >= 75) return '#22c55e'
+  if (score >= 50) return '#eab308'
+  if (score >= 25) return '#f97316'
+  return '#ef4444'
+}
+
+// Approximate radius (metres) per neighbourhood — inner-city kept small to avoid clutter
+const N_RADIUS: Record<string, number> = {
+  'donji-grad': 500, 'gornji-grad': 480, 'trnje': 850,
+  'maksimir': 1900, 'pescenica-zitnjak': 1700, 'novi-zagreb-istok': 2000,
+  'novi-zagreb-zapad': 1900, 'tresnjevka-sjever': 1100, 'tresnjevka-jug': 1000,
+  'crnomerec': 1600, 'gornja-dubrava': 2000, 'donja-dubrava': 1500,
+  'stenjevec': 1600, 'podsused-vrapce': 1500, 'podsljeme': 2500,
+  'sesvete': 3000, 'brezovica': 2400,
+}
+
+/** Dark pill SVG: "Neighbourhood name  72" */
+function nLabel(name: string, score: number, selected: boolean): string {
+  const col = scoreColor(score)
+  const label = name.length > 16 ? name.slice(0, 15) + '…' : name
+  const W = 148, H = 34
+  const bg = selected ? '#1c2232' : '#0d1220'
+  const border = selected ? col : 'rgba(255,255,255,0.14)'
+  const sw = selected ? '1.5' : '0.9'
+  const nameOpacity = selected ? '#ffffff' : 'rgba(255,255,255,0.72)'
+  const glow = selected ? `<rect rx="9" width="${W}" height="${H}" fill="${col}" fill-opacity="0.07"/>` : ''
+  return enc(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
+    `<rect rx="9" x=".5" y=".5" width="${W-1}" height="${H-1}" fill="${bg}" stroke="${border}" stroke-width="${sw}"/>` +
+    glow +
+    `<text x="11" y="21" font-size="11" font-weight="600" fill="${nameOpacity}" font-family="-apple-system,system-ui,sans-serif">${label}</text>` +
+    `<text x="${W-11}" y="22" text-anchor="end" font-size="14" font-weight="800" fill="${col}" font-family="-apple-system,system-ui,sans-serif">${score}</text>` +
+    `</svg>`
+  )
 }
 
 function categoryColor(cat: KomunalniWork['category']): string {
@@ -132,7 +186,14 @@ export function ZagrebMap({
 }: ZagrebMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<google.maps.Map | null>(null)
-  const polygonsRef = useRef<Map<string, google.maps.Polygon>>(new Map())
+  const nCirclesRef   = useRef<Map<string, google.maps.Polygon>>(new Map())
+  const nMarkersRef   = useRef<Map<string, google.maps.Marker>>(new Map())
+  const drawingRef    = useRef<Set<string>>(new Set())
+  const selectedIdRef = useRef<string | null | undefined>(selectedId)
+  // Single shared rAF loop for all drawing animations
+  type AnimState = { pen: google.maps.Polyline; polygon: google.maps.Polygon; pts: google.maps.LatLngLiteral[]; n: NeighborhoodScore; col: string; startTime: number; completed: boolean; penOnMap: boolean }
+  const animMapRef    = useRef<Map<string, AnimState>>(new Map())
+  const rafIdRef      = useRef<number | null>(null)
   const radarMarkersRef = useRef<google.maps.Marker[]>([])
   const kgMarkersRef = useRef<google.maps.Marker[]>([])
   const transitMarkersRef = useRef<google.maps.Marker[]>([])
@@ -156,6 +217,9 @@ export function ZagrebMap({
     setMapReady(true)
   }, [zoom])
 
+  // Keep ref in sync so animation closures can read current selectedId
+  selectedIdRef.current = selectedId
+
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
     if (!key) return
@@ -172,31 +236,161 @@ export function ZagrebMap({
     return () => { _mapsReadyCallback = null; delete (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure }
   }, [initMap])
 
-  // Neighborhood polygons
+  // ── CREATE hand-drawn circles + pill markers ─────────────────────────────────
   useEffect(() => {
     if (!mapReady || !mapInstance.current) return
-    polygonsRef.current.forEach(p => p.setMap(null)); polygonsRef.current.clear()
-    neighborhoods.forEach(n => {
-      const bounds = getBoundsForNeighborhood(n.id, n.centroid)
-      const { fill, stroke } = scoreToColor(n.score)
-      const isSel = n.id === selectedId
-      const poly = new window.google.maps.Polygon({
-        paths: bounds, map: mapInstance.current!,
-        strokeColor: isSel ? '#D4764A' : stroke, strokeOpacity: isSel ? 1 : 0.7, strokeWeight: isSel ? 3 : 1.5,
-        fillColor: isSel ? 'rgba(212,118,74,0.25)' : fill, fillOpacity: 1,
-      })
-      poly.addListener('click', () => onNeighborhoodClick?.(n.id))
-      poly.addListener('mouseover', () => poly.setOptions({ strokeWeight: 2.5, fillOpacity: 0.9 }))
-      poly.addListener('mouseout', () => { if (n.id !== selectedId) poly.setOptions({ strokeWeight: isSel ? 3 : 1.5, fillOpacity: 1 }) })
-      polygonsRef.current.set(n.id, poly)
-    })
-  }, [neighborhoods, selectedId, mapReady, onNeighborhoodClick])
 
-  // Focus selected neighborhood
+    // Cancel any in-flight rAF from a previous run
+    if (rafIdRef.current != null) { cancelAnimationFrame(rafIdRef.current); rafIdRef.current = null }
+    animMapRef.current.forEach(a => a.pen.setMap(null))
+    animMapRef.current.clear()
+
+    nCirclesRef.current.forEach(p => p.setMap(null)); nCirclesRef.current.clear()
+    nMarkersRef.current.forEach(m => m.setMap(null)); nMarkersRef.current.clear()
+    drawingRef.current.clear()
+
+    const W = 148, H = 34
+
+    neighborhoods.forEach((n, idx) => {
+      const col = scoreColor(n.score)
+      const pts = handDrawnPoints(n.centroid, N_RADIUS[n.id] ?? 1200, idx * 137.508 + 42.1)
+
+      const polygon = new window.google.maps.Polygon({
+        paths: pts, strokeColor: col, strokeWeight: 2, strokeOpacity: 0,
+        fillColor: col, fillOpacity: 0, map: mapInstance.current!,
+      })
+      polygon.addListener('click', () => onNeighborhoodClick?.(n.id))
+
+      const marker = new window.google.maps.Marker({
+        position: n.centroid,
+        icon: { url: nLabel(n.nameCroatian, n.score, false), scaledSize: new window.google.maps.Size(W, H), anchor: new window.google.maps.Point(W / 2, H / 2) },
+        title: n.nameCroatian, zIndex: 1, visible: false,
+      })
+      marker.addListener('click', () => onNeighborhoodClick?.(n.id))
+
+      const pen = new window.google.maps.Polyline({ path: [], strokeColor: col, strokeWeight: 3, strokeOpacity: 0.78 })
+      pen.addListener('click', () => onNeighborhoodClick?.(n.id))
+
+      nCirclesRef.current.set(n.id, polygon)
+      nMarkersRef.current.set(n.id, marker)
+      drawingRef.current.add(n.id)
+
+      animMapRef.current.set(n.id, { pen, polygon, pts, n, col, startTime: performance.now() + idx * 55, completed: false, penOnMap: false })
+    })
+
+    if (neighborhoods.length === 0) return
+
+    // Single shared rAF loop — all animations advance in one batch per frame, eliminating concurrent setInterval flicker
+    const loop = () => {
+      const now = performance.now()
+      let anyActive = false
+
+      animMapRef.current.forEach((anim, id) => {
+        if (anim.completed) return
+        if (now < anim.startTime) { anyActive = true; return }
+
+        if (!anim.penOnMap) {
+          // Set pen brightness based on selection state — selected draws bright, others draw dim
+          const isSel = selectedIdRef.current === id
+          anim.pen.setOptions({ strokeOpacity: isSel ? 0.78 : 0.32, strokeWeight: isSel ? 3 : 1.8 })
+          anim.pen.setMap(mapInstance.current!)
+          anim.penOnMap = true
+        }
+
+        const TOTAL = anim.pts.length
+        const elapsed = now - anim.startTime
+        const newStep = Math.min(Math.floor(elapsed / 7), TOTAL) // 7ms/step → ~504ms total
+        const isSel = selectedIdRef.current === id
+
+        anim.pen.setPath(anim.pts.slice(0, newStep))
+        // Fill builds to selected-max or unselected-max so there's no jump at completion
+        anim.polygon.setOptions({ fillOpacity: (isSel ? 0.22 : 0.07) * (newStep / TOTAL), strokeOpacity: 0 })
+
+        if (newStep >= TOTAL) {
+          anim.completed = true
+          anim.pen.setPath([...anim.pts, anim.pts[0]])
+
+          // Match polygon stroke exactly to pen — seamless swap, no visible jump
+          const penOpacity = isSel ? 0.78 : 0.32
+          const penWeight  = isSel ? 3    : 1.8
+          anim.polygon.setOptions({
+            fillOpacity: isSel ? 0.22 : 0.07,
+            strokeOpacity: penOpacity,
+            strokeWeight: penWeight,
+            strokeColor: anim.col,
+          })
+
+          setTimeout(() => {
+            drawingRef.current.delete(id)
+            anim.pen.setMap(null) // polygon stroke already matches pen — visually seamless
+            // Nudge to resting values now that pen is gone
+            anim.polygon.setOptions({ strokeOpacity: isSel ? 1 : 0.55, strokeWeight: isSel ? 3.5 : 2 })
+            const m = nMarkersRef.current.get(id)
+            if (m && mapInstance.current) {
+              m.setMap(mapInstance.current)
+              m.setVisible((mapInstance.current.getZoom() ?? 12) >= 13)
+              if (isSel) {
+                m.setIcon({ url: nLabel(anim.n.nameCroatian, anim.n.score, true), scaledSize: new window.google.maps.Size(W, H), anchor: new window.google.maps.Point(W / 2, H / 2) })
+                m.setZIndex(10)
+              }
+            }
+          }, 80)
+        } else {
+          anyActive = true
+        }
+      })
+
+      if (anyActive) rafIdRef.current = requestAnimationFrame(loop)
+      else rafIdRef.current = null
+    }
+
+    rafIdRef.current = requestAnimationFrame(loop)
+
+    return () => {
+      if (rafIdRef.current != null) { cancelAnimationFrame(rafIdRef.current); rafIdRef.current = null }
+      animMapRef.current.forEach(a => a.pen.setMap(null))
+      animMapRef.current.clear()
+    }
+  }, [neighborhoods, mapReady, onNeighborhoodClick])
+
+  // ── UPDATE selection styles without recreating ────────────────────────────
+  useEffect(() => {
+    if (!mapReady) return
+    nCirclesRef.current.forEach((polygon, id) => {
+      if (drawingRef.current.has(id)) return // animation owns this polygon right now
+      const isSel = id === selectedId
+      const n = neighborhoods.find(x => x.id === id)
+      if (!n) return
+      const col = scoreColor(n.score)
+      // Selected: same color, stronger stroke + fill; unselected: lighter
+      polygon.setOptions({ strokeColor: col, strokeOpacity: isSel ? 1 : 0.55, strokeWeight: isSel ? 3.5 : 2, fillColor: col, fillOpacity: isSel ? 0.22 : 0.07 })
+    })
+    nMarkersRef.current.forEach((marker, id) => {
+      if (drawingRef.current.has(id)) return
+      const isSel = id === selectedId
+      const n = neighborhoods.find(x => x.id === id)
+      if (!n) return
+      marker.setIcon({ url: nLabel(n.nameCroatian, n.score, isSel), scaledSize: new window.google.maps.Size(148, 34), anchor: new window.google.maps.Point(74, 17) })
+      marker.setZIndex(isSel ? 10 : 1)
+    })
+  }, [selectedId, mapReady, neighborhoods])
+
+// ── ZOOM: hide pill labels when zoomed out ────────────────────────────────
+  useEffect(() => {
+    if (!mapReady || !mapInstance.current) return
+    const update = () => {
+      const z = mapInstance.current!.getZoom() ?? 12
+      nMarkersRef.current.forEach(m => m.setVisible(z >= 13))
+    }
+    const listener = window.google.maps.event.addListener(mapInstance.current, 'zoom_changed', update)
+    return () => window.google.maps.event.removeListener(listener)
+  }, [mapReady])
+
+  // Pan to selected neighbourhood — don't force-zoom, let user stay in control
   useEffect(() => {
     if (!mapReady || !mapInstance.current || !focusNeighborhoodId) return
     const n = neighborhoods.find(n => n.id === focusNeighborhoodId)
-    if (n) { mapInstance.current.panTo(n.centroid); mapInstance.current.setZoom(14) }
+    if (n) mapInstance.current.panTo(n.centroid)
   }, [focusNeighborhoodId, neighborhoods, mapReady])
 
   // Komunalni radar
@@ -380,30 +574,3 @@ export function ZagrebMap({
   )
 }
 
-function getBoundsForNeighborhood(id: string, centroid: { lat: number; lng: number }): Array<{ lat: number; lng: number }> {
-  const b: Record<string, Array<{ lat: number; lng: number }>> = {
-    'donji-grad':          [{ lat: 45.8200, lng: 15.9650 }, { lat: 45.8200, lng: 16.0000 }, { lat: 45.8050, lng: 16.0000 }, { lat: 45.8050, lng: 15.9650 }],
-    'gornji-grad':         [{ lat: 45.8300, lng: 15.9600 }, { lat: 45.8300, lng: 15.9900 }, { lat: 45.8100, lng: 15.9900 }, { lat: 45.8100, lng: 15.9600 }],
-    'trnje':               [{ lat: 45.8070, lng: 15.9750 }, { lat: 45.8070, lng: 16.0200 }, { lat: 45.7900, lng: 16.0200 }, { lat: 45.7900, lng: 15.9750 }],
-    'maksimir':            [{ lat: 45.8400, lng: 15.9950 }, { lat: 45.8400, lng: 16.0800 }, { lat: 45.8050, lng: 16.0800 }, { lat: 45.8050, lng: 15.9950 }],
-    'pescenica-zitnjak':   [{ lat: 45.8200, lng: 16.0100 }, { lat: 45.8200, lng: 16.1000 }, { lat: 45.7900, lng: 16.1000 }, { lat: 45.7900, lng: 16.0100 }],
-    'novi-zagreb-istok':   [{ lat: 45.7900, lng: 15.9800 }, { lat: 45.7900, lng: 16.0700 }, { lat: 45.7600, lng: 16.0700 }, { lat: 45.7600, lng: 15.9800 }],
-    'novi-zagreb-zapad':   [{ lat: 45.7950, lng: 15.8900 }, { lat: 45.7950, lng: 15.9800 }, { lat: 45.7600, lng: 15.9800 }, { lat: 45.7600, lng: 15.8900 }],
-    'tresnjevka-sjever':   [{ lat: 45.8250, lng: 15.9200 }, { lat: 45.8250, lng: 15.9750 }, { lat: 45.7980, lng: 15.9750 }, { lat: 45.7980, lng: 15.9200 }],
-    'tresnjevka-jug':      [{ lat: 45.8100, lng: 15.9200 }, { lat: 45.8100, lng: 15.9700 }, { lat: 45.7800, lng: 15.9700 }, { lat: 45.7800, lng: 15.9200 }],
-    'crnomerec':           [{ lat: 45.8400, lng: 15.8900 }, { lat: 45.8400, lng: 15.9600 }, { lat: 45.8000, lng: 15.9600 }, { lat: 45.8000, lng: 15.8900 }],
-    'gornja-dubrava':      [{ lat: 45.8600, lng: 16.0400 }, { lat: 45.8600, lng: 16.1300 }, { lat: 45.8200, lng: 16.1300 }, { lat: 45.8200, lng: 16.0400 }],
-    'donja-dubrava':       [{ lat: 45.8300, lng: 16.0500 }, { lat: 45.8300, lng: 16.1200 }, { lat: 45.8000, lng: 16.1200 }, { lat: 45.8000, lng: 16.0500 }],
-    'stenjevec':           [{ lat: 45.8400, lng: 15.8500 }, { lat: 45.8400, lng: 15.9300 }, { lat: 45.8000, lng: 15.9300 }, { lat: 45.8000, lng: 15.8500 }],
-    'podsused-vrapce':     [{ lat: 45.8400, lng: 15.8100 }, { lat: 45.8400, lng: 15.8900 }, { lat: 45.8000, lng: 15.8900 }, { lat: 45.8000, lng: 15.8100 }],
-    'podsljeme':           [{ lat: 45.8800, lng: 15.9000 }, { lat: 45.8800, lng: 16.0100 }, { lat: 45.8400, lng: 16.0100 }, { lat: 45.8400, lng: 15.9000 }],
-    'sesvete':             [{ lat: 45.8700, lng: 16.0800 }, { lat: 45.8700, lng: 16.1700 }, { lat: 45.8000, lng: 16.1700 }, { lat: 45.8000, lng: 16.0800 }],
-    'brezovica':           [{ lat: 45.7700, lng: 15.8500 }, { lat: 45.7700, lng: 15.9500 }, { lat: 45.7300, lng: 15.9500 }, { lat: 45.7300, lng: 15.8500 }],
-  }
-  return b[id] ?? [
-    { lat: centroid.lat + 0.015, lng: centroid.lng - 0.020 },
-    { lat: centroid.lat + 0.015, lng: centroid.lng + 0.020 },
-    { lat: centroid.lat - 0.015, lng: centroid.lng + 0.020 },
-    { lat: centroid.lat - 0.015, lng: centroid.lng - 0.020 },
-  ]
-}

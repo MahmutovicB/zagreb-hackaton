@@ -159,14 +159,23 @@ export default function LandingPage() {
         <motion.h1
           {...reveal(ready, 0.1)}
           className="text-center mb-3"
-          style={{ fontFamily: 'var(--font-syne)' }}
+          style={{ fontFamily: 'var(--font-display)' }}
         >
-          <span className="block text-5xl md:text-6xl font-black text-white tracking-tight leading-none">
+          <span
+            className="block text-[2.6rem] md:text-[3.4rem] font-black text-white leading-[1.05]"
+            style={{ letterSpacing: '-0.02em', fontVariationSettings: '"SOFT" 50, "WONK" 0' }}
+          >
             Gdje živjeti
           </span>
           <span
-            className="block text-5xl md:text-6xl font-black tracking-tight leading-none mt-1"
-            style={{ color: '#D4764A', textShadow: '0 0 80px rgba(212,118,74,0.35)' }}
+            className="block text-[2.6rem] md:text-[3.4rem] font-black leading-[1.05]"
+            style={{
+              color: '#D4764A',
+              letterSpacing: '-0.02em',
+              textShadow: '0 0 60px rgba(212,118,74,0.45)',
+              fontVariationSettings: '"SOFT" 80, "WONK" 1',
+              fontStyle: 'italic',
+            }}
           >
             u Zagrebu?
           </span>
