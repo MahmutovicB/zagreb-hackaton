@@ -101,6 +101,7 @@ function ResultsContent() {
   const [radarWorks, setRadarWorks] = useState<KomunalniWork[]>([])
   const [kindergartens, setKindergartens] = useState<Kindergarten[]>([])
   const [filterText, setFilterText] = useState('')
+  const [neighborhoodFilter, setNeighborhoodFilter] = useState<'best' | 'top3' | 'all'>('all')
   const [layers, setLayers] = useState<MapLayers>({
     radar: false, transit: false, kindergartens: false, airQuality: false, cycling: false,
   })
@@ -143,6 +144,13 @@ function ResultsContent() {
   const filteredNeighborhoods = result?.neighborhoods?.filter(n =>
     !filterText || n.nameCroatian.toLowerCase().includes(filterText.toLowerCase())
   ) ?? []
+
+  const mapNeighborhoods = (() => {
+    const all = result?.neighborhoods ?? []
+    if (neighborhoodFilter === 'best') return all.slice(0, 1)
+    if (neighborhoodFilter === 'top3') return all.slice(0, 3)
+    return all
+  })()
 
   return (
     <div className="h-screen bg-[#080D12] flex flex-col overflow-hidden">
@@ -368,11 +376,31 @@ function ResultsContent() {
             </div>
           </motion.div>
 
+          {/* Neighborhood filter */}
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.35 }}
+            className="absolute top-[56px] right-3 z-10"
+          >
+            <div className="bg-[#080D12]/85 backdrop-blur-xl rounded-xl border border-white/8 shadow-lg flex overflow-hidden">
+              {(['best', 'top3', 'all'] as const).map((opt, i) => (
+                <button
+                  key={opt}
+                  onClick={() => setNeighborhoodFilter(opt)}
+                  className={`px-3 py-1.5 text-[11px] font-semibold tracking-wide transition-colors ${i > 0 ? 'border-l border-white/8' : ''} ${neighborhoodFilter === opt ? 'bg-[#D4764A] text-white' : 'text-white/50 hover:text-white/80'}`}
+                >
+                  {opt === 'best' ? 'Top 1' : opt === 'top3' ? 'Top 3' : 'All'}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Map */}
           <div className="flex-1 p-2 pt-16">
             <div className="w-full h-full rounded-2xl overflow-hidden ring-1 ring-white/6">
               <ZagrebMap
-                neighborhoods={result?.neighborhoods ?? []}
+                neighborhoods={mapNeighborhoods}
                 radarWorks={radarWorks}
                 kindergartens={kindergartens}
                 selectedId={selectedId}
