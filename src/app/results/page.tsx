@@ -437,10 +437,11 @@ function ResultsContent() {
             <p className="text-[9px] text-white/30 uppercase tracking-widest mb-2 font-semibold">AI Score</p>
             <div className="space-y-1.5">
               {[
-                { color: '#22c55e', label: '75–100', sublabel: 'Odlično'  },
-                { color: '#eab308', label: '50–74',  sublabel: 'Dobro'    },
-                { color: '#f97316', label: '25–49',  sublabel: 'Osrednje' },
-                { color: '#ef4444', label: '0–24',   sublabel: 'Slabo'    },
+                { color: '#22c55e', label: '80–100', sublabel: 'Odlično'    },
+                { color: '#84cc16', label: '65–79',  sublabel: 'Vrlo dobro' },
+                { color: '#eab308', label: '50–64',  sublabel: 'Dobro'      },
+                { color: '#f97316', label: '35–49',  sublabel: 'Osrednje'   },
+                { color: '#ef4444', label: '0–34',   sublabel: 'Slabo'      },
               ].map(({ color, label, sublabel }, i) => (
                 <motion.div
                   key={label}

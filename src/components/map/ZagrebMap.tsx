@@ -112,9 +112,10 @@ function handDrawnPoints(
 }
 
 function scoreColor(score: number): string {
-  if (score >= 75) return '#22c55e'
+  if (score >= 80) return '#22c55e'
+  if (score >= 65) return '#84cc16'
   if (score >= 50) return '#eab308'
-  if (score >= 25) return '#f97316'
+  if (score >= 35) return '#f97316'
   return '#ef4444'
 }
 
