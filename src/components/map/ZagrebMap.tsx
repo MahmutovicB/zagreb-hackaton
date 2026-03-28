@@ -192,8 +192,9 @@ export function ZagrebMap({
   const selectedIdRef = useRef<string | null | undefined>(selectedId)
   // Single shared rAF loop for all drawing animations
   type AnimState = { pen: google.maps.Polyline; polygon: google.maps.Polygon; pts: google.maps.LatLngLiteral[]; n: NeighborhoodScore; col: string; startTime: number; completed: boolean; penOnMap: boolean }
-  const animMapRef    = useRef<Map<string, AnimState>>(new Map())
-  const rafIdRef      = useRef<number | null>(null)
+  const animMapRef      = useRef<Map<string, AnimState>>(new Map())
+  const rafIdRef        = useRef<number | null>(null)
+  const prevDrawnIdsRef = useRef<Set<string>>(new Set()) // IDs that have already completed their draw animation
   const radarMarkersRef = useRef<google.maps.Marker[]>([])
   const kgMarkersRef = useRef<google.maps.Marker[]>([])
   const transitMarkersRef = useRef<google.maps.Marker[]>([])
@@ -250,32 +251,44 @@ export function ZagrebMap({
     drawingRef.current.clear()
 
     const W = 148, H = 34
+    let animIdx = 0 // separate counter — only increments for neighborhoods that actually animate
 
-    neighborhoods.forEach((n, idx) => {
+    neighborhoods.forEach((n) => {
       const col = scoreColor(n.score)
-      const pts = handDrawnPoints(n.centroid, N_RADIUS[n.id] ?? 1200, idx * 137.508 + 42.1)
+      const pts = handDrawnPoints(n.centroid, N_RADIUS[n.id] ?? 1200, n.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 137.508 + 42.1)
+      const isSel = selectedIdRef.current === n.id
+      const alreadyDrawn = prevDrawnIdsRef.current.has(n.id)
 
       const polygon = new window.google.maps.Polygon({
-        paths: pts, strokeColor: col, strokeWeight: 2, strokeOpacity: 0,
-        fillColor: col, fillOpacity: 0, map: mapInstance.current!,
+        paths: pts, strokeColor: col, strokeWeight: alreadyDrawn ? (isSel ? 3.5 : 2) : 2,
+        strokeOpacity: alreadyDrawn ? (isSel ? 1 : 0.55) : 0,
+        fillColor: col, fillOpacity: alreadyDrawn ? (isSel ? 0.22 : 0.07) : 0,
+        map: mapInstance.current!,
       })
       polygon.addListener('click', () => onNeighborhoodClick?.(n.id))
 
       const marker = new window.google.maps.Marker({
         position: n.centroid,
-        icon: { url: nLabel(n.nameCroatian, n.score, false), scaledSize: new window.google.maps.Size(W, H), anchor: new window.google.maps.Point(W / 2, H / 2) },
-        title: n.nameCroatian, zIndex: 1, visible: false,
+        icon: { url: nLabel(n.nameCroatian, n.score, isSel && alreadyDrawn), scaledSize: new window.google.maps.Size(W, H), anchor: new window.google.maps.Point(W / 2, H / 2) },
+        title: n.nameCroatian, zIndex: isSel ? 10 : 1,
+        visible: alreadyDrawn && (mapInstance.current!.getZoom() ?? 12) >= 13,
       })
       marker.addListener('click', () => onNeighborhoodClick?.(n.id))
-
-      const pen = new window.google.maps.Polyline({ path: [], strokeColor: col, strokeWeight: 3, strokeOpacity: 0.78 })
-      pen.addListener('click', () => onNeighborhoodClick?.(n.id))
+      if (alreadyDrawn) marker.setMap(mapInstance.current!)
 
       nCirclesRef.current.set(n.id, polygon)
       nMarkersRef.current.set(n.id, marker)
-      drawingRef.current.add(n.id)
 
-      animMapRef.current.set(n.id, { pen, polygon, pts, n, col, startTime: performance.now() + idx * 55, completed: false, penOnMap: false })
+      if (alreadyDrawn) {
+        // Already animated before — no re-animation needed
+      } else {
+        // First time this neighborhood is shown — animate it
+        const pen = new window.google.maps.Polyline({ path: [], strokeColor: col, strokeWeight: 3, strokeOpacity: 0.78 })
+        pen.addListener('click', () => onNeighborhoodClick?.(n.id))
+        drawingRef.current.add(n.id)
+        animMapRef.current.set(n.id, { pen, polygon, pts, n, col, startTime: performance.now() + animIdx * 55, completed: false, penOnMap: false })
+        animIdx++
+      }
     })
 
     if (neighborhoods.length === 0) return
@@ -322,6 +335,7 @@ export function ZagrebMap({
 
           setTimeout(() => {
             drawingRef.current.delete(id)
+            prevDrawnIdsRef.current.add(id) // mark as drawn — won't animate again this session
             anim.pen.setMap(null) // polygon stroke already matches pen — visually seamless
             // Nudge to resting values now that pen is gone
             anim.polygon.setOptions({ strokeOpacity: isSel ? 1 : 0.55, strokeWeight: isSel ? 3.5 : 2 })

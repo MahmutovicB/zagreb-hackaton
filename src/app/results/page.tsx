@@ -410,6 +410,7 @@ function ResultsContent() {
           <div className="flex-1 p-2 pt-16">
             <div className="w-full h-full rounded-2xl overflow-hidden ring-1 ring-white/6">
               <ZagrebMap
+                key={query}
                 neighborhoods={mapNeighborhoods}
                 radarWorks={radarWorks}
                 kindergartens={kindergartens}
