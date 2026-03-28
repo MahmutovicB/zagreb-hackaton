@@ -2,19 +2,44 @@ import type { SearchCriteria, NeighborhoodScore, ScoreComponent, KomunalniWork, 
 import type { NeighborhoodMeta } from '@/types'
 import { distanceMeters } from './geocoding'
 
-// ZET tram stops (approximate centroids of main lines through each neighborhood)
+// ZET stops (tram + bus) — one representative stop per neighborhood
+// Tram lines: 14 (Savski most–Mihaljevac/Dubec), 6/7 (Sopot–Črnomerec), 11/12 (Dubec–Dubrava), 17 (Prečko–Borongaj)
+// Bus stops used for areas without trams (ZET also operates bus network)
 const ZET_STOPS: Array<{ lat: number; lng: number; district: string }> = [
-  { lat: 45.8131, lng: 15.9792, district: 'donji-grad' },
-  { lat: 45.8119, lng: 15.9681, district: 'gornji-grad' },
-  { lat: 45.8105, lng: 15.9461, district: 'tresnjevka-sjever' },
-  { lat: 45.7975, lng: 15.9431, district: 'tresnjevka-jug' },
-  { lat: 45.7989, lng: 16.0050, district: 'trnje' },
-  { lat: 45.8050, lng: 16.0500, district: 'pescenica-zitnjak' },
-  { lat: 45.8250, lng: 16.0350, district: 'maksimir' },
-  { lat: 45.7780, lng: 16.0071, district: 'novi-zagreb-istok' },
-  { lat: 45.7780, lng: 15.9450, district: 'novi-zagreb-zapad' },
-  { lat: 45.8201, lng: 15.9230, district: 'crnomerec' },
+  { lat: 45.8131, lng: 15.9792, district: 'donji-grad' },         // Trg bana Jelačića — many tram lines
+  { lat: 45.8119, lng: 15.9681, district: 'gornji-grad' },        // Ilica/Frankopanska tram 14 (Gornji grad is uphill, tram runs below)
+  { lat: 45.7989, lng: 16.0050, district: 'trnje' },              // Savska/Vukovarska tram 6/7
+  { lat: 45.8220, lng: 16.0180, district: 'maksimir' },           // Bukovačka tram 11/12
+  { lat: 45.8050, lng: 16.0500, district: 'pescenica-zitnjak' }, // Kvaternikov trg tram 7
+  { lat: 45.7780, lng: 16.0071, district: 'novi-zagreb-istok' }, // Jarunska tram 6/7
+  { lat: 45.7750, lng: 15.9420, district: 'novi-zagreb-zapad' }, // Jarun tram 17
+  { lat: 45.8105, lng: 15.9461, district: 'tresnjevka-sjever' }, // Ozaljska tram 14
+  { lat: 45.7975, lng: 15.9431, district: 'tresnjevka-jug' },    // Savska cesta tram 14/17
+  { lat: 45.8201, lng: 15.9230, district: 'crnomerec' },          // Črnomerec tram 14 terminus
+  { lat: 45.8150, lng: 16.0700, district: 'donja-dubrava' },      // Dubrava tram 11/12 terminus
+  { lat: 45.8195, lng: 15.9100, district: 'stenjevec' },          // Špansko tram 14 terminus
+  { lat: 45.8370, lng: 16.0760, district: 'gornja-dubrava' },     // ZET bus 203/237 — no tram
+  { lat: 45.8180, lng: 15.8720, district: 'podsused-vrapce' },   // ZET bus 109 — no tram
+  { lat: 45.8490, lng: 15.9520, district: 'podsljeme' },          // ZET bus 102 near Mihaljevac
+  { lat: 45.8310, lng: 16.1080, district: 'sesvete' },            // ZET bus 295 Sesvete centar
+  { lat: 45.7580, lng: 15.9120, district: 'brezovica' },          // ZET bus 268 — very limited service
 ]
+
+function matchesDistrict(workDistrict: string, neighborhood: NeighborhoodMeta): boolean {
+  if (!workDistrict) return false
+  const wd = workDistrict.toLowerCase().replace(/[–\-]/g, ' ').trim()
+  const namesToCheck = [
+    neighborhood.nameCroatian.toLowerCase().replace(/[–\-]/g, ' '),
+    neighborhood.name.toLowerCase().replace(/[–\-]/g, ' '),
+    neighborhood.id.replace(/-/g, ' '),
+  ]
+  for (const name of namesToCheck) {
+    const words = name.split(/[\s,]+/).filter(w => w.length > 3)
+    if (words.some(word => wd.includes(word))) return true
+    if (wd.includes(name) || name.includes(wd)) return true
+  }
+  return false
+}
 
 export interface ScoringInput {
   neighborhood: NeighborhoodMeta
@@ -34,10 +59,7 @@ export function scoreNeighborhood(input: ScoringInput): NeighborhoodScore {
 
   // Find works in this neighborhood
   const worksInNeighborhood = liveData.activeWorks.filter(w => {
-    if (w.district) {
-      return w.district.toLowerCase().includes(neighborhood.name.toLowerCase().split(' ')[0].toLowerCase()) ||
-             neighborhood.name.toLowerCase().includes(w.district.toLowerCase().split(' ')[0].toLowerCase())
-    }
+    if (w.district && matchesDistrict(w.district, neighborhood)) return true
     if (w.lat && w.lng) {
       return distanceMeters(neighborhood.centroid, { lat: w.lat, lng: w.lng }) < 2000
     }
@@ -54,11 +76,12 @@ export function scoreNeighborhood(input: ScoringInput): NeighborhoodScore {
   const kgsWithSpots = nearbyKindergartens.filter(k => k.freeSpots > 0)
   const totalFreeSpots = nearbyKindergartens.reduce((sum, k) => sum + k.freeSpots, 0)
 
-  // Find nearest ZET stop
+  // Find nearest ZET stop — prefer the stop assigned to this neighborhood, then check all
+  const ownStop = ZET_STOPS.find(s => s.district === neighborhood.id)
   const nearestStop = ZET_STOPS.reduce((nearest, stop) => {
     const d = distanceMeters(neighborhood.centroid, { lat: stop.lat, lng: stop.lng })
     return d < nearest.distance ? { stop, distance: d } : nearest
-  }, { stop: ZET_STOPS[0], distance: Infinity })
+  }, { stop: ownStop ?? ZET_STOPS[0], distance: ownStop ? distanceMeters(neighborhood.centroid, { lat: ownStop.lat, lng: ownStop.lng }) : Infinity })
   const nearestZetMeters = Math.round(nearestStop.distance)
 
   // Find air quality near neighborhood

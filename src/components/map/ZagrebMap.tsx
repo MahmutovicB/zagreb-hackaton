@@ -59,7 +59,6 @@ interface ZagrebMapProps {
 declare global {
   interface Window {
     google: typeof google
-    initGoogleMaps?: () => void
   }
 }
 
@@ -117,15 +116,14 @@ export function ZagrebMap({
       setMapError('billing')
     }
 
-    window.initGoogleMaps = initMap
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initGoogleMaps&libraries=visualization`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=visualization`
     script.async = true
     script.defer = true
+    script.onload = () => initMap()
     script.onerror = () => setMapError('auth')
     document.head.appendChild(script)
     return () => {
-      delete window.initGoogleMaps;
       delete (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure
     }
   }, [initMap])

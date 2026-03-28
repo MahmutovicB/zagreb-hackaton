@@ -32,9 +32,12 @@ export async function POST(req: NextRequest) {
 
     // Calculate commute for top 5 if workLocation specified
     if (criteria.workLocation) {
+      const destination = criteria.workLocation.toLowerCase().includes('zagreb')
+        ? criteria.workLocation
+        : criteria.workLocation + ', Zagreb'
       const top5 = initialScores.slice(0, 5)
       const commuteResults = await Promise.all(
-        top5.map(n => getCommuteMinutes(n.centroid, criteria.workLocation + ', Zagreb'))
+        top5.map(n => getCommuteMinutes(n.centroid, destination))
       )
       commuteResults.forEach((minutes, idx) => {
         const n = top5[idx]
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate narrative
-    const narrative = await generateNarrative(query, initialScores)
+    const narrative = await generateNarrative(query, initialScores, criteria)
 
     return NextResponse.json({
       criteria,
