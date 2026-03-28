@@ -1,4 +1,4 @@
-# Gdje Živjeti
+# Zagreb Hackathon - Gdje Živjeti
 
 **Zagreb neighborhood intelligence** — an AI-assisted matchmaker and a live view of communal works, built for **Cursor Hackathon Zagreb** under the theme *“Build something Zagreb wants.”*
 
@@ -24,7 +24,7 @@
 
 ---
 
-## Who benefits
+## Who can benefit?
 
 | Who | Why it helps |
 |:---|:---|
