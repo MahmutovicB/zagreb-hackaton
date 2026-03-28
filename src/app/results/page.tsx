@@ -7,7 +7,7 @@ import { ArrowLeft, Loader2, ChevronDown, ChevronUp, Search, Sparkles } from 'lu
 import { ZagrebMap } from '@/components/map/ZagrebMap'
 import { NeighborhoodCard } from '@/components/neighborhood-card'
 import { ApartmentDrawer } from '@/components/apartment-drawer'
-import { LayerControls, type MapLayers } from '@/components/layer-controls'
+import { LayerControls, type MapLayers, type LayerCounts } from '@/components/layer-controls'
 import type { NeighborhoodScore, KomunalniWork, Kindergarten, MatchResponse } from '@/types'
 
 function SkeletonCard({ delay }: { delay: number }) {
@@ -133,6 +133,13 @@ function ResultsContent() {
   }, [])
 
   const activeRadarCount = radarWorks.filter(w => w.status === 'u_tijeku').length
+  const layerCounts: LayerCounts = {
+    radar: activeRadarCount,
+    transit: 21,
+    kindergartens: kindergartens.length,
+    airQuality: 8,
+    cycling: 15,
+  }
   const filteredNeighborhoods = result?.neighborhoods?.filter(n =>
     !filterText || n.nameCroatian.toLowerCase().includes(filterText.toLowerCase())
   ) ?? []
@@ -357,7 +364,7 @@ function ResultsContent() {
             className="absolute top-3 left-3 right-3 z-10"
           >
             <div className="bg-[#080D12]/85 backdrop-blur-xl rounded-xl p-2 border border-white/8 shadow-lg">
-              <LayerControls layers={layers} onToggle={toggleLayer} radarCount={activeRadarCount} />
+              <LayerControls layers={layers} onToggle={toggleLayer} counts={layerCounts} />
             </div>
           </motion.div>
 
@@ -370,7 +377,10 @@ function ResultsContent() {
                 kindergartens={kindergartens}
                 selectedId={selectedId}
                 showRadar={layers.radar}
+                showTransit={layers.transit}
                 showKindergartens={layers.kindergartens}
+                showAirQuality={layers.airQuality}
+                showCycling={layers.cycling}
                 onNeighborhoodClick={setSelectedId}
                 focusNeighborhoodId={selectedId}
                 zoom={12}
