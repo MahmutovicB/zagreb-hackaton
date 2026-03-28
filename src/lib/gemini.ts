@@ -4,7 +4,6 @@ import neighborhoodsData from '@/data/neighborhoods.json'
 
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 const model = genai.getGenerativeModel({ model: 'gemini-2.0-flash' })
-console.log('Gemini key loaded:', !!process.env.GEMINI_API_KEY)                                               
 
 const EXTRACT_CRITERIA_PROMPT = `Ti si asistent za pretragu stanova u Zagrebu. Korisnik opisuje gdje želi živjeti.
 Izvuci strukturirane kriterije iz opisa.

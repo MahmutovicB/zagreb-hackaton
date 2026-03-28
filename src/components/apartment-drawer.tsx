@@ -6,6 +6,7 @@ import { X, ExternalLink, Building2, Home, Tag, MapPin, CalendarDays } from 'luc
 import type { NeighborhoodScore } from '@/types'
 import type { PlatformLink } from '@/lib/apartment-platforms'
 import { buildShortTermLinks } from '@/lib/apartment-platforms'
+import { useLang } from '@/lib/lang-context'
 
 interface ApartmentDrawerProps {
   neighborhood: NeighborhoodScore | null
@@ -23,6 +24,21 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
   const [data, setData] = useState<ApartmentData | null>(null)
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<Tab>('rent')
+  const lang = useLang()
+  const t = {
+    title:         lang === 'en' ? 'Apartments' : 'Stanovi',
+    platforms:     lang === 'en' ? 'platforms · Direct links' : 'platformi · Direktni linkovi',
+    tabRent:       lang === 'en' ? 'Rent'    : 'Najam',
+    tabBuy:        lang === 'en' ? 'Buy'     : 'Kupnja',
+    tabBooking:    'Booking',
+    filteredFor:   lang === 'en' ? 'Filtered for' : 'Filtrirano za',
+    allZagreb:     lang === 'en' ? 'Zagreb — all neighborhoods' : 'Zagreb — svi kvartovi',
+    agencies:      lang === 'en' ? 'Nearby agencies' : 'Agencije u blizini',
+    why:           lang === 'en' ? 'Why' : 'Zašto',
+    shortTermNote: lang === 'en'
+      ? 'Perfect for testing a neighborhood before moving. Book a short stay and see if the location suits you.'
+      : 'Idealno za testirati kvart prije preseljenja. Rezerviraj kratki boravak i provjeri odgovara li ti lokacija.',
+  }
 
   useEffect(() => {
     if (!neighborhood) { setData(null); return }
@@ -77,10 +93,10 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
             <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-white/8 shrink-0">
               <div>
                 <h2 className="text-base font-bold text-white leading-tight">
-                  Stanovi — {neighborhood.nameCroatian}
+                  {t.title} — {neighborhood.nameCroatian}
                 </h2>
                 <p className="text-xs text-white/35 mt-0.5">
-                  {data ? `${activeLinks.length} platformi` : '…'} · Direktni linkovi
+                  {data ? `${activeLinks.length} ` : '…'}{t.platforms}
                 </p>
               </div>
               <button
@@ -93,9 +109,9 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
 
             {/* Rent / Sale / Short-term tabs */}
             <div className="flex gap-1.5 px-5 py-3 border-b border-white/6 shrink-0">
-              <TabBtn active={tab === 'rent'} onClick={() => setTab('rent')} icon={Home}>Najam</TabBtn>
-              <TabBtn active={tab === 'sale'} onClick={() => setTab('sale')} icon={Tag}>Kupnja</TabBtn>
-              <TabBtn active={tab === 'shortterm'} onClick={() => setTab('shortterm')} icon={CalendarDays}>Booking</TabBtn>
+              <TabBtn active={tab === 'rent'} onClick={() => setTab('rent')} icon={Home}>{t.tabRent}</TabBtn>
+              <TabBtn active={tab === 'sale'} onClick={() => setTab('sale')} icon={Tag}>{t.tabBuy}</TabBtn>
+              <TabBtn active={tab === 'shortterm'} onClick={() => setTab('shortterm')} icon={CalendarDays}>{t.tabBooking}</TabBtn>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-5 pt-3">
@@ -111,16 +127,14 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                 <>
                   <section className="space-y-2">
                     <SectionLabel icon={MapPin} color="#22c55e">
-                      Filtrirano za {neighborhood?.nameCroatian}
+                      {t.filteredFor} {neighborhood?.nameCroatian}
                     </SectionLabel>
                     {shortTermLinks.map((p, i) => (
                       <PlatformCard key={p.id} platform={p} index={i} />
                     ))}
                   </section>
                   <div className="rounded-xl bg-white/3 border border-white/6 px-4 py-3">
-                    <p className="text-[11px] text-white/40 leading-relaxed">
-                      Kratki boravak u ovom kvartu — savršena baza za nekoliko dana uživanja u Zagrebu, bez žurbe i s dobrim osjećajem za grad.
-                    </p>
+                    <p className="text-[11px] text-white/40 leading-relaxed">{t.shortTermNote}</p>
                   </div>
                 </>
               )}
@@ -143,7 +157,7 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                   {zagrebLinks.length > 0 && (
                     <section className="space-y-2">
                       <SectionLabel icon={MapPin} color="rgba(255,255,255,0.25)">
-                        Zagreb — svi kvartovi
+                        {t.allZagreb}
                       </SectionLabel>
                       {zagrebLinks.map((p, i) => (
                         <PlatformCard key={p.id} platform={p} index={i} />
@@ -155,7 +169,7 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                   {data.places.length > 0 && (
                     <section className="space-y-2">
                       <SectionLabel icon={Building2} color="rgba(255,255,255,0.25)">
-                        Agencije u blizini
+                        {t.agencies}
                       </SectionLabel>
                       {data.places.map((p, i) => (
                         <motion.a
@@ -188,7 +202,7 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                   {neighborhood.scoreBreakdown.length > 0 && (
                     <section className="rounded-2xl bg-white/3 border border-white/6 p-4 space-y-2.5">
                       <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                        Zašto {neighborhood.nameCroatian}?
+                        {t.why} {neighborhood.nameCroatian}?
                       </p>
                       {neighborhood.scoreBreakdown.filter(c => c.value > 0).slice(0, 4).map((c, i) => (
                         <div key={i} className="flex items-start gap-2.5">

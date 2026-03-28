@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Construction, Train, Baby, Wind, Bike } from 'lucide-react'
+import { useLang } from '@/lib/lang-context'
 
 export interface MapLayers {
   radar: boolean
@@ -25,18 +26,28 @@ interface LayerControlsProps {
   counts?: LayerCounts
 }
 
+const LAYER_LABELS: Record<string, { hr: string; en: string }> = {
+  radar:         { hr: 'Komunalni radar', en: 'Utility radar'   },
+  transit:       { hr: 'ZET postaje',     en: 'Transit stops'   },
+  kindergartens: { hr: 'Vrtići',          en: 'Kindergartens'   },
+  airQuality:    { hr: 'Zrak',            en: 'Air quality'     },
+  cycling:       { hr: 'Biciklizam',      en: 'Cycling'         },
+}
+
 const LAYER_CONFIG = [
-  { key: 'radar' as const,        label: 'Komunalni radar', icon: Construction, activeColor: '#ef4444', activeBg: 'rgba(239,68,68,0.12)',   activeBorder: 'rgba(239,68,68,0.35)'  },
-  { key: 'transit' as const,      label: 'ZET postaje',     icon: Train,         activeColor: '#3b82f6', activeBg: 'rgba(59,130,246,0.12)',  activeBorder: 'rgba(59,130,246,0.35)' },
-  { key: 'kindergartens' as const,label: 'Vrtići',          icon: Baby,          activeColor: '#ec4899', activeBg: 'rgba(236,72,153,0.12)',  activeBorder: 'rgba(236,72,153,0.35)' },
-  { key: 'airQuality' as const,   label: 'Zrak',            icon: Wind,          activeColor: '#22c55e', activeBg: 'rgba(34,197,94,0.12)',   activeBorder: 'rgba(34,197,94,0.35)'  },
-  { key: 'cycling' as const,      label: 'Biciklizam',      icon: Bike,          activeColor: '#22c55e', activeBg: 'rgba(34,197,94,0.12)',   activeBorder: 'rgba(34,197,94,0.35)'  },
+  { key: 'radar' as const,        icon: Construction, activeColor: '#ef4444', activeBg: 'rgba(239,68,68,0.12)',   activeBorder: 'rgba(239,68,68,0.35)'  },
+  { key: 'transit' as const,      icon: Train,        activeColor: '#3b82f6', activeBg: 'rgba(59,130,246,0.12)',  activeBorder: 'rgba(59,130,246,0.35)' },
+  { key: 'kindergartens' as const,icon: Baby,         activeColor: '#ec4899', activeBg: 'rgba(236,72,153,0.12)',  activeBorder: 'rgba(236,72,153,0.35)' },
+  { key: 'airQuality' as const,   icon: Wind,         activeColor: '#22c55e', activeBg: 'rgba(34,197,94,0.12)',   activeBorder: 'rgba(34,197,94,0.35)'  },
+  { key: 'cycling' as const,      icon: Bike,         activeColor: '#22c55e', activeBg: 'rgba(34,197,94,0.12)',   activeBorder: 'rgba(34,197,94,0.35)'  },
 ]
 
 export function LayerControls({ layers, onToggle, counts = {} }: LayerControlsProps) {
+  const lang = useLang()
   return (
     <div className="flex flex-wrap gap-1.5">
-      {LAYER_CONFIG.map(({ key, label, icon: Icon, activeColor, activeBg, activeBorder }) => {
+      {LAYER_CONFIG.map(({ key, icon: Icon, activeColor, activeBg, activeBorder }) => {
+        const label = LAYER_LABELS[key][lang]
         const active = layers[key]
         const count = counts[key]
         return (

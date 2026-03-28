@@ -9,6 +9,7 @@ import { NeighborhoodCard } from '@/components/neighborhood-card'
 import { ApartmentDrawer } from '@/components/apartment-drawer'
 import { LayerControls, type MapLayers, type LayerCounts } from '@/components/layer-controls'
 import type { NeighborhoodScore, KomunalniWork, Kindergarten, MatchResponse } from '@/types'
+import { LangContext, type Lang } from '@/lib/lang-context'
 
 function SkeletonCard({ delay }: { delay: number }) {
   return (
@@ -92,6 +93,41 @@ function ResultsContent() {
   const params = useSearchParams()
   const router = useRouter()
   const query = params.get('q') ?? ''
+  const [lang, setLang] = useState<Lang>((params.get('lang') as Lang) ?? 'hr')
+
+  const t = {
+    search:       lang === 'en' ? 'Search'                          : 'Pretraga',
+    neighborhoods:lang === 'en' ? 'neighborhoods'                   : 'kvartova',
+    analyzing:    lang === 'en' ? 'AI analyzing 17 neighborhoods…'  : 'AI analizira 17 kvartova…',
+    filterPlaceholder: lang === 'en' ? 'Filter neighborhoods…'      : 'Filtriraj kvartove…',
+    topPicks:     lang === 'en' ? 'Top picks'                       : 'Top preporuke',
+    otherNeigh:   lang === 'en' ? 'Other neighborhoods'             : 'Ostali kvartovi',
+    noResults:    lang === 'en' ? `No neighborhoods for`            : `Nema kvartova za`,
+    tryAgain:     lang === 'en' ? '← Try again'                     : '← Pokušajte ponovo',
+    scoreLegend: {
+      title: 'AI Score',
+      items: lang === 'en'
+        ? [
+            { color: '#22c55e', label: '80–100', sublabel: 'Excellent'    },
+            { color: '#84cc16', label: '65–79',  sublabel: 'Very good'    },
+            { color: '#eab308', label: '50–64',  sublabel: 'Good'         },
+            { color: '#f97316', label: '35–49',  sublabel: 'Average'      },
+            { color: '#ef4444', label: '0–34',   sublabel: 'Poor'         },
+          ]
+        : [
+            { color: '#22c55e', label: '80–100', sublabel: 'Odlično'    },
+            { color: '#84cc16', label: '65–79',  sublabel: 'Vrlo dobro' },
+            { color: '#eab308', label: '50–64',  sublabel: 'Dobro'      },
+            { color: '#f97316', label: '35–49',  sublabel: 'Osrednje'   },
+            { color: '#ef4444', label: '0–34',   sublabel: 'Slabo'      },
+          ],
+    },
+    mapFilter: {
+      best: 'Top 1',
+      top3: 'Top 3',
+      all: lang === 'en' ? 'All' : 'Svi',
+    },
+  }
 
   const [loading, setLoading] = useState(true)
   const [result, setResult] = useState<MatchResponse | null>(null)
@@ -161,7 +197,8 @@ function ResultsContent() {
   })()
 
   return (
-    <div className="h-screen bg-[#080D12] flex flex-col overflow-hidden">
+    <LangContext.Provider value={lang}>
+      <div className="h-screen bg-[#080D12] flex flex-col overflow-hidden">
 
       {/* ── Top bar ── */}
       <motion.div
@@ -180,7 +217,7 @@ function ResultsContent() {
         </motion.button>
 
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-[10px] font-bold text-[#D4764A]/60 uppercase tracking-widest shrink-0">Pretraga</span>
+          <span className="text-[10px] font-bold text-[#D4764A]/60 uppercase tracking-widest shrink-0">{t.search}</span>
           <motion.p
             initial={{ opacity: 0, x: 6 }}
             animate={{ opacity: 1, x: 0 }}
@@ -200,10 +237,20 @@ function ResultsContent() {
               className="text-[10px] font-semibold shrink-0 px-2 py-1 rounded-md"
               style={{ background: 'rgba(212,118,74,0.12)', color: 'rgba(212,118,74,0.85)' }}
             >
-              {result.neighborhoods.length} kvartova
+              {result.neighborhoods.length} {t.neighborhoods}
             </motion.span>
           )}
         </AnimatePresence>
+
+        {/* Language toggle */}
+        <button
+          onClick={() => setLang(l => l === 'hr' ? 'en' : 'hr')}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/12 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all shrink-0 ml-1"
+        >
+          <span className={`text-xs font-semibold transition-colors ${lang === 'hr' ? 'text-white' : 'text-white/30'}`}>HR</span>
+          <span className="text-white/20 text-xs mx-0.5">/</span>
+          <span className={`text-xs font-semibold transition-colors ${lang === 'en' ? 'text-white' : 'text-white/30'}`}>EN</span>
+        </button>
       </motion.div>
 
       {/* ── Main layout ── */}
@@ -236,7 +283,7 @@ function ResultsContent() {
                     animate={{ opacity: [0.4, 1, 0.4] }}
                     transition={{ duration: 1.8, repeat: Infinity }}
                   >
-                    AI analizira 17 kvartova…
+                    {t.analyzing}
                   </motion.span>
                 </div>
               ) : (
@@ -249,7 +296,7 @@ function ResultsContent() {
                     <Search className="w-3 h-3 text-white/25 shrink-0" />
                     <input
                       type="text"
-                      placeholder="Filtriraj kvartove…"
+                      placeholder={t.filterPlaceholder}
                       value={filterText}
                       onChange={e => setFilterText(e.target.value)}
                       className="flex-1 bg-transparent text-xs text-white/70 placeholder-white/20 outline-none"
@@ -285,7 +332,7 @@ function ResultsContent() {
                   onClick={() => router.push('/')}
                   className="text-xs text-white/30 hover:text-white/60 transition-colors border border-white/10 rounded-lg px-3 py-1.5"
                 >
-                  ← Pokušajte ponovo
+                  {t.tryAgain}
                 </motion.button>
               </div>
             </motion.div>
@@ -309,7 +356,7 @@ function ResultsContent() {
                   className="flex items-center gap-2 px-1 pb-1"
                 >
                   <div className="h-px flex-1 bg-gradient-to-r from-[#D4764A]/30 to-transparent" />
-                  <span className="text-[9px] font-bold text-[#D4764A]/50 uppercase tracking-widest">Top preporuke</span>
+                  <span className="text-[9px] font-bold text-[#D4764A]/50 uppercase tracking-widest">{t.topPicks}</span>
                   <div className="h-px flex-1 bg-gradient-to-l from-[#D4764A]/30 to-transparent" />
                 </motion.div>
               )}
@@ -334,7 +381,7 @@ function ResultsContent() {
                   className="flex items-center gap-2 px-1 pt-1 pb-1"
                 >
                   <div className="h-px flex-1 bg-white/6" />
-                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Ostali kvartovi</span>
+                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{t.otherNeigh}</span>
                   <div className="h-px flex-1 bg-white/6" />
                 </motion.div>
               )}
@@ -362,7 +409,7 @@ function ResultsContent() {
               animate={{ opacity: 1 }}
               className="flex-1 flex items-center justify-center"
             >
-              <p className="text-sm text-white/25">Nema kvartova za &ldquo;{filterText}&rdquo;</p>
+              <p className="text-sm text-white/25">{t.noResults} &ldquo;{filterText}&rdquo;</p>
             </motion.div>
           )}
         </motion.div>
@@ -400,7 +447,7 @@ function ResultsContent() {
                   onClick={() => setNeighborhoodFilter(opt)}
                   className={`px-3 py-1.5 text-[11px] font-semibold tracking-wide transition-colors ${i > 0 ? 'border-l border-white/8' : ''} ${neighborhoodFilter === opt ? 'bg-[#D4764A] text-white' : 'text-white/50 hover:text-white/80'}`}
                 >
-                  {opt === 'best' ? 'Top 1' : opt === 'top3' ? 'Top 3' : 'Svi'}
+                  {t.mapFilter[opt]}
                 </button>
               ))}
             </div>
@@ -434,15 +481,9 @@ function ResultsContent() {
             transition={{ delay: 0.5, duration: 0.35 }}
             className="absolute bottom-6 right-4 bg-[#080D12]/85 backdrop-blur-xl rounded-xl p-3 border border-white/8 shadow-lg"
           >
-            <p className="text-[9px] text-white/30 uppercase tracking-widest mb-2 font-semibold">AI Score</p>
+            <p className="text-[9px] text-white/30 uppercase tracking-widest mb-2 font-semibold">{t.scoreLegend.title}</p>
             <div className="space-y-1.5">
-              {[
-                { color: '#22c55e', label: '80–100', sublabel: 'Odlično'    },
-                { color: '#84cc16', label: '65–79',  sublabel: 'Vrlo dobro' },
-                { color: '#eab308', label: '50–64',  sublabel: 'Dobro'      },
-                { color: '#f97316', label: '35–49',  sublabel: 'Osrednje'   },
-                { color: '#ef4444', label: '0–34',   sublabel: 'Slabo'      },
-              ].map(({ color, label, sublabel }, i) => (
+              {t.scoreLegend.items.map(({ color, label, sublabel }, i) => (
                 <motion.div
                   key={label}
                   initial={{ opacity: 0, x: 6 }}
@@ -465,7 +506,8 @@ function ResultsContent() {
         neighborhood={apartmentNeighborhood}
         onClose={() => setApartmentNeighborhood(null)}
       />
-    </div>
+      </div>
+    </LangContext.Provider>
   )
 }
 

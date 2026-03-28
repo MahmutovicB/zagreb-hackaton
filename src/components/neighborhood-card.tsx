@@ -7,6 +7,7 @@ import {
   Construction, Train, Baby, Wind, MapPin,
   Home, ChevronDown, ChevronUp, ExternalLink
 } from 'lucide-react'
+import { useLang } from '@/lib/lang-context'
 
 interface NeighborhoodCardProps {
   neighborhood: NeighborhoodScore
@@ -85,6 +86,7 @@ export function NeighborhoodCard({
 }: NeighborhoodCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const lang = useLang()
   const cfg = scoreConfig(neighborhood.score)
   const isTop3 = rank <= 3
   const displayScore = useCountUp(neighborhood.score)
@@ -244,7 +246,7 @@ export function NeighborhoodCard({
             }}
           >
             <Home className="w-3 h-3" />
-            Stanovi
+            {lang === 'en' ? 'Apartments' : 'Stanovi'}
             <ExternalLink className="w-2.5 h-2.5 opacity-60" />
           </motion.button>
 

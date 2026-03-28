@@ -7,12 +7,46 @@ import { Mic, MicOff, ArrowRight, MapPin, Construction, Baby, Wind } from 'lucid
 import Image from 'next/image'
 import { preloaderDone } from '@/lib/preloaderState'
 
-const EXAMPLE_QUERIES = [
-  'Obitelj s bebom, bez auta, trebamo vrtić, mama radi na Trgu',
-  'Student, tiho, blizu Sveučilišta, biciklom na faks',
-  'Par, ljubitelji prirode, zelenilo, Jarun, povoljno',
-  'Umirovljenik, blizu ljekarne i liječnika, mirno',
-]
+const TRANSLATIONS = {
+  hr: {
+    badge: 'Zagreb · Live podatci · AI pretraga',
+    headline1: 'Gdje živjeti',
+    headline2: 'u Zagrebu?',
+    subtitle: 'Opišite što tražite — AI pronalazi pravi kvart s live komunalnim radovima, vrtićima i stanovima',
+    placeholder: 'Opišite gdje želite živjeti…',
+    searchBtn: 'Traži',
+    stat1: '17 kvartova',
+    stat2: 'Live komunalni radar',
+    stat3: 'Slobodna mjesta u vrtićima',
+    stat4: 'Kvaliteta zraka',
+    queries: [
+      'Obitelj s bebom, bez auta, trebamo vrtić, mama radi na Trgu',
+      'Student, tiho, blizu Sveučilišta, biciklom na faks',
+      'Par, ljubitelji prirode, zelenilo, Jarun, povoljno',
+      'Umirovljenik, blizu ljekarne i liječnika, mirno',
+    ],
+    voiceLang: 'hr-HR',
+  },
+  en: {
+    badge: 'Zagreb · Live data · AI search',
+    headline1: 'Where to live',
+    headline2: 'in Zagreb?',
+    subtitle: 'Describe what you\'re looking for — AI finds the right neighborhood with live utility works, kindergartens and apartments',
+    placeholder: 'Describe where you want to live…',
+    searchBtn: 'Search',
+    stat1: '17 neighborhoods',
+    stat2: 'Live utility radar',
+    stat3: 'Free kindergarten spots',
+    stat4: 'Air quality',
+    queries: [
+      'Family with a baby, no car, need kindergarten, near city center',
+      'Student, quiet, near the University, cycling to class',
+      'Couple, nature lovers, green spaces, Jarun lake, affordable',
+      'Retiree, near pharmacy and doctor, peaceful neighborhood',
+    ],
+    voiceLang: 'en-US',
+  },
+}
 
 type SpeechRecognitionInstance = {
   continuous: boolean
@@ -32,7 +66,6 @@ declare global {
   }
 }
 
-// Framer Motion variant — animate value itself changes so re-trigger works
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function reveal(ready: boolean, delay = 0): any {
   return {
@@ -46,9 +79,11 @@ export default function LandingPage() {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [listening, setListening] = useState(false)
-  // true immediately if returning via soft nav
   const [ready, setReady] = useState(preloaderDone)
+  const [lang, setLang] = useState<'hr' | 'en'>('hr')
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
+
+  const t = TRANSLATIONS[lang]
 
   useEffect(() => {
     if (preloaderDone) return
@@ -60,7 +95,7 @@ export default function LandingPage() {
   function handleSubmit(q?: string) {
     const finalQuery = q ?? query
     if (!finalQuery.trim()) return
-    router.push(`/results?q=${encodeURIComponent(finalQuery.trim())}`)
+    router.push(`/results?q=${encodeURIComponent(finalQuery.trim())}&lang=${lang}`)
   }
 
   function toggleVoice() {
@@ -69,13 +104,13 @@ export default function LandingPage() {
     if (listening) { recognitionRef.current?.stop(); setListening(false); return }
     const r = new SR()
     recognitionRef.current = r
-    r.lang = 'hr-HR'
+    r.lang = t.voiceLang
     r.continuous = false
     r.interimResults = true
     r.onresult = (e) => {
-      let t = ''
-      for (let i = 0; i < 10; i++) { if (!e.results[i]) break; t += e.results[i][0].transcript }
-      setQuery(t)
+      let text = ''
+      for (let i = 0; i < 10; i++) { if (!e.results[i]) break; text += e.results[i][0].transcript }
+      setQuery(text)
     }
     r.onerror = () => setListening(false)
     r.onend   = () => setListening(false)
@@ -83,10 +118,30 @@ export default function LandingPage() {
     setListening(true)
   }
 
+  function toggleLang() {
+    setLang(prev => prev === 'hr' ? 'en' : 'hr')
+    setQuery('')
+  }
+
   return (
     <main className="min-h-screen relative overflow-x-hidden flex flex-col items-center justify-center">
 
-      {/* ── Zagreb photo — synced to preloader exit ── */}
+      {/* ── Language toggle ── */}
+      <div className="absolute top-4 right-4 z-20">
+        <motion.button
+          onClick={toggleLang}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: ready ? 1 : 0 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/15 bg-white/6 backdrop-blur-xl hover:bg-white/12 hover:border-white/25 transition-all"
+        >
+          <span className={`text-xs font-semibold transition-colors ${lang === 'hr' ? 'text-white' : 'text-white/35'}`}>HR</span>
+          <span className="text-white/20 text-xs mx-0.5">/</span>
+          <span className={`text-xs font-semibold transition-colors ${lang === 'en' ? 'text-white' : 'text-white/35'}`}>EN</span>
+        </motion.button>
+      </div>
+
+      {/* ── Zagreb photo ── */}
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
@@ -103,26 +158,19 @@ export default function LandingPage() {
         />
       </motion.div>
 
-      {/* ── Layered overlay — subtle enough the photo breathes through ── */}
-      {/* Bottom-to-top gradient so headline area is readable */}
+      {/* ── Overlays ── */}
       <div
         className="absolute inset-0"
         style={{
-          background: `
-            linear-gradient(to top, rgba(8,13,18,0.92) 0%, rgba(8,13,18,0.55) 50%, rgba(8,13,18,0.38) 100%)
-          `,
+          background: `linear-gradient(to top, rgba(8,13,18,0.92) 0%, rgba(8,13,18,0.55) 50%, rgba(8,13,18,0.38) 100%)`,
         }}
       />
-
-      {/* Soft center vignette around the content area */}
       <div
         className="absolute inset-0"
         style={{
           background: 'radial-gradient(ellipse 90% 70% at 50% 55%, rgba(8,13,18,0.3) 0%, transparent 70%)',
         }}
       />
-
-      {/* Subtle grain — cinematic texture */}
       <div
         className="absolute inset-0 opacity-[0.028] pointer-events-none"
         style={{
@@ -131,8 +179,6 @@ export default function LandingPage() {
           backgroundSize: '128px',
         }}
       />
-
-      {/* Faint grid */}
       <div
         className="absolute inset-0 opacity-[0.025]"
         style={{
@@ -151,7 +197,7 @@ export default function LandingPage() {
         >
           <div className="w-1.5 h-1.5 rounded-full bg-[#D4764A] animate-pulse" />
           <span className="text-xs text-[#D4764A] font-medium tracking-wide">
-            Zagreb · Live podatci · AI pretraga
+            {t.badge}
           </span>
         </motion.div>
 
@@ -165,7 +211,7 @@ export default function LandingPage() {
             className="block text-[2.6rem] md:text-[3.4rem] font-black text-white leading-[1.05]"
             style={{ letterSpacing: '-0.02em', fontVariationSettings: '"SOFT" 50, "WONK" 0' }}
           >
-            Gdje živjeti
+            {t.headline1}
           </span>
           <span
             className="block text-[2.6rem] md:text-[3.4rem] font-black leading-[1.05]"
@@ -177,7 +223,7 @@ export default function LandingPage() {
               fontStyle: 'italic',
             }}
           >
-            u Zagrebu?
+            {t.headline2}
           </span>
         </motion.h1>
 
@@ -185,7 +231,7 @@ export default function LandingPage() {
           {...reveal(ready, 0.18)}
           className="text-white/45 text-base text-center mb-10 max-w-md leading-relaxed"
         >
-          Opišite što tražite — AI pronalazi pravi kvart s live komunalnim radovima, vrtićima i stanovima
+          {t.subtitle}
         </motion.p>
 
         {/* Search box */}
@@ -199,7 +245,7 @@ export default function LandingPage() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() } }}
-              placeholder="Opišite gdje želite živjeti…"
+              placeholder={t.placeholder}
               rows={2}
               className="flex-1 bg-transparent text-white placeholder-white/25 resize-none outline-none text-base leading-relaxed"
             />
@@ -219,7 +265,7 @@ export default function LandingPage() {
                 disabled={!query.trim()}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#D4764A] text-white font-semibold text-sm disabled:opacity-30 hover:bg-[#e8855a] transition-colors"
               >
-                Traži
+                {t.searchBtn}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -231,7 +277,7 @@ export default function LandingPage() {
           {...reveal(ready, 0.35)}
           className="w-full mt-4 flex flex-wrap gap-2 justify-center"
         >
-          {EXAMPLE_QUERIES.map((ex, i) => (
+          {t.queries.map((ex, i) => (
             <button
               key={i}
               onClick={() => { setQuery(ex); handleSubmit(ex) }}
@@ -249,22 +295,22 @@ export default function LandingPage() {
         >
           <div className="flex items-center gap-1.5">
             <MapPin className="w-3 h-3 text-[#D4764A]/60" />
-            <span>17 kvartova</span>
+            <span>{t.stat1}</span>
           </div>
           <div className="w-px h-3 bg-white/10" />
           <div className="flex items-center gap-1.5">
             <Construction className="w-3 h-3 text-red-400/60" />
-            <span>Live komunalni radar</span>
+            <span>{t.stat2}</span>
           </div>
           <div className="w-px h-3 bg-white/10" />
           <div className="flex items-center gap-1.5">
             <Baby className="w-3 h-3 text-pink-400/60" />
-            <span>Slobodna mjesta u vrtićima</span>
+            <span>{t.stat3}</span>
           </div>
           <div className="w-px h-3 bg-white/10" />
           <div className="flex items-center gap-1.5">
             <Wind className="w-3 h-3 text-cyan-400/60" />
-            <span>Kvaliteta zraka</span>
+            <span>{t.stat4}</span>
           </div>
         </motion.div>
       </div>
