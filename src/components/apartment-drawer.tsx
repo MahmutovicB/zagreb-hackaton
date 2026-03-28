@@ -61,7 +61,7 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             className="fixed bottom-0 left-0 right-0 md:left-auto md:top-0 md:bottom-0 md:w-[420px] md:right-0 z-50 bg-[#0D1117] border-t md:border-t-0 md:border-l border-white/10 rounded-t-3xl md:rounded-t-none flex flex-col"
             style={{ maxHeight: '90vh' }}
           >
@@ -131,12 +131,15 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                         Agencije u blizini
                       </SectionLabel>
                       {data.places.map((p, i) => (
-                        <a
+                        <motion.a
                           key={i}
                           href={`https://www.google.com/maps/place/?q=place_id:${p.place_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 rounded-xl bg-white/4 border border-white/6 hover:bg-white/7 hover:border-white/12 transition-all group"
+                          className="flex items-center gap-3 p-3 rounded-xl border border-white/6 transition-colors group"
+                          style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+                          whileHover={{ x: 3, backgroundColor: 'rgba(255,255,255,0.07)' }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                         >
                           <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center shrink-0">
                             <Building2 className="w-4 h-4 text-white/35" />
@@ -149,7 +152,7 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                             {p.rating && <span className="text-xs text-yellow-400 font-medium">★ {p.rating}</span>}
                             <ExternalLink className="w-3 h-3 text-white/25 group-hover:text-white/50 transition-colors" />
                           </div>
-                        </a>
+                        </motion.a>
                       ))}
                     </section>
                   )}
@@ -185,23 +188,30 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
 }
 
 function PlatformCard({ platform, index }: { platform: PlatformLink; index: number }) {
+  const [hovered, setHovered] = useState(false)
+
   return (
     <motion.a
       href={platform.url}
       target="_blank"
       rel="noopener noreferrer"
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04 }}
-      className="flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all duration-150 group block"
-      style={{ background: platform.bgColor, borderColor: `${platform.color}28` }}
-      onMouseEnter={e => {
-        const el = e.currentTarget as HTMLElement
-        el.style.borderColor = `${platform.color}55`
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ scale: 1.025, y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      transition={{
+        default: { delay: index * 0.06, duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+        scale: { type: 'spring', stiffness: 400, damping: 25 },
+        y: { type: 'spring', stiffness: 400, damping: 25 },
       }}
-      onMouseLeave={e => {
-        const el = e.currentTarget as HTMLElement
-        el.style.borderColor = `${platform.color}28`
+      className="flex items-center gap-3.5 p-3.5 rounded-2xl border group block"
+      style={{
+        background: platform.bgColor,
+        borderColor: hovered ? `${platform.color}55` : `${platform.color}28`,
+        boxShadow: hovered ? `0 4px 20px 0 ${platform.color}26` : 'none',
+        transition: 'border-color 150ms, box-shadow 200ms',
       }}
     >
       <div
@@ -230,12 +240,17 @@ function SectionLabel({ icon: Icon, color, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="flex items-center gap-1.5 mb-1">
+    <motion.div
+      className="flex items-center gap-1.5 mb-1"
+      initial={{ opacity: 0, x: -4 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+    >
       <Icon className="w-3 h-3" style={{ color }} />
       <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>
         {children}
       </span>
-    </div>
+    </motion.div>
   )
 }
 
@@ -246,17 +261,20 @@ function TabBtn({ active, onClick, icon: Icon, children }: {
   children: React.ReactNode
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+      className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
       style={{
         background: active ? 'rgba(212,118,74,0.15)' : 'rgba(255,255,255,0.05)',
         color: active ? '#D4764A' : 'rgba(255,255,255,0.35)',
         border: active ? '1px solid rgba(212,118,74,0.35)' : '1px solid rgba(255,255,255,0.08)',
       }}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       <Icon className="w-3 h-3" />
       {children}
-    </button>
+    </motion.button>
   )
 }
