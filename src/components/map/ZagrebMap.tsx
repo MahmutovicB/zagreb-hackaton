@@ -118,6 +118,12 @@ declare global {
   interface Window { google: typeof google; initGoogleMaps?: () => void }
 }
 
+// Module-level stable callback — survives React Strict Mode double-invoke cleanup
+let _mapsReadyCallback: (() => void) | null = null
+if (typeof window !== 'undefined') {
+  window.initGoogleMaps = () => _mapsReadyCallback?.()
+}
+
 export function ZagrebMap({
   neighborhoods = [], radarWorks = [], kindergartens = [],
   selectedId, showRadar = false, showTransit = false,
@@ -157,13 +163,13 @@ export function ZagrebMap({
     const existing = document.querySelector('script[src*="maps.googleapis.com"]')
     if (existing) { existing.addEventListener('load', initMap); return }
     ;(window as typeof window & { gm_authFailure?: () => void }).gm_authFailure = () => setMapError('billing')
-    window.initGoogleMaps = initMap
+    _mapsReadyCallback = initMap
     const script = document.createElement('script')
     script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initGoogleMaps&libraries=visualization`
     script.async = true; script.defer = true
     script.onerror = () => setMapError('auth')
     document.head.appendChild(script)
-    return () => { delete window.initGoogleMaps; delete (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure }
+    return () => { _mapsReadyCallback = null; delete (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure }
   }, [initMap])
 
   // Neighborhood polygons
