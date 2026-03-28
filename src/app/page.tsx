@@ -84,7 +84,7 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center">
+    <main className="min-h-screen relative overflow-x-hidden flex flex-col items-center justify-center">
 
       {/* ── Zagreb photo — synced to preloader exit ── */}
       <motion.div
