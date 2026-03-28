@@ -1,0 +1,325 @@
+[
+  {
+    "id": "donji-grad",
+    "name": "Donji Grad",
+    "nameCroatian": "Donji grad",
+    "centroid": { "lat": 45.8131, "lng": 15.9792 },
+    "bounds": [
+      { "lat": 45.8200, "lng": 15.9650 },
+      { "lat": 45.8200, "lng": 16.0000 },
+      { "lat": 45.8050, "lng": 16.0000 },
+      { "lat": 45.8050, "lng": 15.9650 }
+    ],
+    "character": "urban-core",
+    "greenScore": 5,
+    "transitScore": 10,
+    "quietScore": 3,
+    "costIndex": 9,
+    "description": "Srce Zagreba — kafići, galerije, HNK i sve što grad nudi. Bučno, skupo, nezamjenjivo.",
+    "highlights": ["Trg bana Jelačića", "Cvjetni trg", "Tkalčićeva ulica", "HNK"]
+  },
+  {
+    "id": "gornji-grad",
+    "name": "Gornji Grad – Medveščak",
+    "nameCroatian": "Gornji grad - Medveščak",
+    "centroid": { "lat": 45.8192, "lng": 15.9744 },
+    "bounds": [
+      { "lat": 45.8300, "lng": 15.9600 },
+      { "lat": 45.8300, "lng": 15.9900 },
+      { "lat": 45.8100, "lng": 15.9900 },
+      { "lat": 45.8100, "lng": 15.9600 }
+    ],
+    "character": "historic-elite",
+    "greenScore": 8,
+    "transitScore": 7,
+    "quietScore": 7,
+    "costIndex": 9,
+    "description": "Povijesna jezgra na brdu — Kaptol, Strossmayer, mirne ulice i pogled na cijeli Zagreb.",
+    "highlights": ["Kaptol", "Strossmayerovo šetalište", "Britanski trg", "Funicular"]
+  },
+  {
+    "id": "trnje",
+    "name": "Trnje",
+    "nameCroatian": "Trnje",
+    "centroid": { "lat": 45.7980, "lng": 15.9950 },
+    "bounds": [
+      { "lat": 45.8070, "lng": 15.9750 },
+      { "lat": 45.8070, "lng": 16.0200 },
+      { "lat": 45.7900, "lng": 16.0200 },
+      { "lat": 45.7900, "lng": 15.9750 }
+    ],
+    "character": "mixed-urban",
+    "greenScore": 6,
+    "transitScore": 8,
+    "quietScore": 5,
+    "costIndex": 6,
+    "description": "Arena Zagreb, Bundek jezero i sve više novih stanova. Dinamičan kvart u razvoju.",
+    "highlights": ["Bundek", "Arena Zagreb", "Savski gaj", "ZET tramvaj"]
+  },
+  {
+    "id": "maksimir",
+    "name": "Maksimir",
+    "nameCroatian": "Maksimir",
+    "centroid": { "lat": 45.8250, "lng": 16.0350 },
+    "bounds": [
+      { "lat": 45.8400, "lng": 15.9950 },
+      { "lat": 45.8400, "lng": 16.0800 },
+      { "lat": 45.8050, "lng": 16.0800 },
+      { "lat": 45.8050, "lng": 15.9950 }
+    ],
+    "character": "green-residential",
+    "greenScore": 10,
+    "transitScore": 6,
+    "quietScore": 8,
+    "costIndex": 7,
+    "description": "Park Maksimir, ZOO i uređene stambene zone. Idealno za obitelji s djecom i ljubitelje prirode.",
+    "highlights": ["Park Maksimir", "ZOO Zagreb", "Stadion Maksimir", "Šuma Maksimir"]
+  },
+  {
+    "id": "pescenica-zitnjak",
+    "name": "Peščenica – Žitnjak",
+    "nameCroatian": "Peščenica-Žitnjak",
+    "centroid": { "lat": 45.8050, "lng": 16.0500 },
+    "bounds": [
+      { "lat": 45.8200, "lng": 16.0100 },
+      { "lat": 45.8200, "lng": 16.1000 },
+      { "lat": 45.7900, "lng": 16.1000 },
+      { "lat": 45.7900, "lng": 16.0100 }
+    ],
+    "character": "working-class",
+    "greenScore": 4,
+    "transitScore": 7,
+    "quietScore": 5,
+    "costIndex": 4,
+    "description": "Pristupačan kvart s dobrim tramvajskim vezama. Industrijsko nasljeđe i obiteljski stanovi.",
+    "highlights": ["Kvaternikov trg", "Žitnjak tržnica", "Tram 7", "Industrijska zona"]
+  },
+  {
+    "id": "novi-zagreb-istok",
+    "name": "Novi Zagreb – Istok",
+    "nameCroatian": "Novi Zagreb-Istok",
+    "centroid": { "lat": 45.7750, "lng": 16.0200 },
+    "bounds": [
+      { "lat": 45.7900, "lng": 15.9800 },
+      { "lat": 45.7900, "lng": 16.0700 },
+      { "lat": 45.7600, "lng": 16.0700 },
+      { "lat": 45.7600, "lng": 15.9800 }
+    ],
+    "character": "new-residential",
+    "greenScore": 7,
+    "transitScore": 7,
+    "quietScore": 6,
+    "costIndex": 5,
+    "description": "Blok sustav, Jarugova šuma, Sava. Moderni stanovi i dobra infrastruktura.",
+    "highlights": ["Jarun jezero", "Bundek", "Sava šetnica", "Tram 6/7"]
+  },
+  {
+    "id": "novi-zagreb-zapad",
+    "name": "Novi Zagreb – Zapad",
+    "nameCroatian": "Novi Zagreb-Zapad",
+    "centroid": { "lat": 45.7780, "lng": 15.9450 },
+    "bounds": [
+      { "lat": 45.7950, "lng": 15.8900 },
+      { "lat": 45.7950, "lng": 15.9800 },
+      { "lat": 45.7600, "lng": 15.9800 },
+      { "lat": 45.7600, "lng": 15.8900 }
+    ],
+    "character": "new-residential",
+    "greenScore": 8,
+    "transitScore": 6,
+    "quietScore": 7,
+    "costIndex": 5,
+    "description": "Jarun i Savski nasip. Sportski centar Jarun, mirna atmosfera, popularno s mlađim obiteljima.",
+    "highlights": ["Jarun jezero", "Veslački centar", "Sava biciklističke staze", "Arena centar"]
+  },
+  {
+    "id": "tresnjevka-sjever",
+    "name": "Trešnjevka – Sjever",
+    "nameCroatian": "Trešnjevka-Sjever",
+    "centroid": { "lat": 45.8100, "lng": 15.9500 },
+    "bounds": [
+      { "lat": 45.8250, "lng": 15.9200 },
+      { "lat": 45.8250, "lng": 15.9750 },
+      { "lat": 45.7980, "lng": 15.9750 },
+      { "lat": 45.7980, "lng": 15.9200 }
+    ],
+    "character": "authentic-urban",
+    "greenScore": 5,
+    "transitScore": 9,
+    "quietScore": 4,
+    "costIndex": 5,
+    "description": "Autentični zagrebački kvart — tržnica, kafići, tramvaj 14. Srce Trešnjevke.",
+    "highlights": ["Tržnica Trešnjevka", "Tram 14", "Ozaljska", "Knežija"]
+  },
+  {
+    "id": "tresnjevka-jug",
+    "name": "Trešnjevka – Jug",
+    "nameCroatian": "Trešnjevka-Jug",
+    "centroid": { "lat": 45.7950, "lng": 15.9450 },
+    "bounds": [
+      { "lat": 45.8100, "lng": 15.9200 },
+      { "lat": 45.8100, "lng": 15.9700 },
+      { "lat": 45.7800, "lng": 15.9700 },
+      { "lat": 45.7800, "lng": 15.9200 }
+    ],
+    "character": "family-residential",
+    "greenScore": 6,
+    "transitScore": 9,
+    "quietScore": 5,
+    "costIndex": 5,
+    "description": "Popularan izbor za mlade obitelji. Dobri vrtići, tram do centra za 15 minuta.",
+    "highlights": ["Savska cesta", "Tram 14/17", "Vrtići Trešnjevka", "Tržnica Špansko"]
+  },
+  {
+    "id": "crnomerec",
+    "name": "Črnomerec",
+    "nameCroatian": "Črnomerec",
+    "centroid": { "lat": 45.8200, "lng": 15.9250 },
+    "bounds": [
+      { "lat": 45.8400, "lng": 15.8900 },
+      { "lat": 45.8400, "lng": 15.9600 },
+      { "lat": 45.8000, "lng": 15.9600 },
+      { "lat": 45.8000, "lng": 15.8900 }
+    ],
+    "character": "green-hillside",
+    "greenScore": 9,
+    "transitScore": 7,
+    "quietScore": 8,
+    "costIndex": 6,
+    "description": "Zeleni kvart na padinama Medvednice. Miran, obiteljski, s odličnim pristupom prirodi.",
+    "highlights": ["Šuma Črnomerec", "Mirogoj", "Tram 14", "Medvednica pristup"]
+  },
+  {
+    "id": "gornja-dubrava",
+    "name": "Gornja Dubrava",
+    "nameCroatian": "Gornja Dubrava",
+    "centroid": { "lat": 45.8400, "lng": 16.0800 },
+    "bounds": [
+      { "lat": 45.8600, "lng": 16.0400 },
+      { "lat": 45.8600, "lng": 16.1300 },
+      { "lat": 45.8200, "lng": 16.1300 },
+      { "lat": 45.8200, "lng": 16.0400 }
+    ],
+    "character": "suburban",
+    "greenScore": 7,
+    "transitScore": 5,
+    "quietScore": 8,
+    "costIndex": 3,
+    "description": "Miran predgrađanski kvart s pristupačnim cijenama. Dobro za obitelji koje traže mir i prostor.",
+    "highlights": ["Dubrava centrum", "Šuma Dubrava", "Autobus zone", "Sportski parkovi"]
+  },
+  {
+    "id": "donja-dubrava",
+    "name": "Donja Dubrava",
+    "nameCroatian": "Donja Dubrava",
+    "centroid": { "lat": 45.8150, "lng": 16.0800 },
+    "bounds": [
+      { "lat": 45.8300, "lng": 16.0500 },
+      { "lat": 45.8300, "lng": 16.1200 },
+      { "lat": 45.8000, "lng": 16.1200 },
+      { "lat": 45.8000, "lng": 16.0500 }
+    ],
+    "character": "working-residential",
+    "greenScore": 5,
+    "transitScore": 6,
+    "quietScore": 6,
+    "costIndex": 3,
+    "description": "Pristupačan kvart s miješanom izgradnjom. Dobra opcija za studente i mlade parove.",
+    "highlights": ["Dubrava tržnica", "Tram prema centru", "Sportski centar"]
+  },
+  {
+    "id": "stenjevec",
+    "name": "Stenjevec",
+    "nameCroatian": "Stenjevec",
+    "centroid": { "lat": 45.8200, "lng": 15.8900 },
+    "bounds": [
+      { "lat": 45.8400, "lng": 15.8500 },
+      { "lat": 45.8400, "lng": 15.9300 },
+      { "lat": 45.8000, "lng": 15.9300 },
+      { "lat": 45.8000, "lng": 15.8500 }
+    ],
+    "character": "suburban-green",
+    "greenScore": 8,
+    "transitScore": 5,
+    "quietScore": 8,
+    "costIndex": 4,
+    "description": "Miran, zeleniji dio Zagreba. Auto preporučen, ali tiho i povoljno.",
+    "highlights": ["Špansko", "Šuma Stenjevec", "Sportski centar Špansko"]
+  },
+  {
+    "id": "podsused-vrapce",
+    "name": "Podsused – Vrapče",
+    "nameCroatian": "Podsused-Vrapče",
+    "centroid": { "lat": 45.8200, "lng": 15.8500 },
+    "bounds": [
+      { "lat": 45.8400, "lng": 15.8100 },
+      { "lat": 45.8400, "lng": 15.8900 },
+      { "lat": 45.8000, "lng": 15.8900 },
+      { "lat": 45.8000, "lng": 15.8100 }
+    ],
+    "character": "rural-fringe",
+    "greenScore": 9,
+    "transitScore": 4,
+    "quietScore": 9,
+    "costIndex": 3,
+    "description": "Rubni kvart s ruralnim karakterom. Medvednica na dlanu, priroda u izobilju.",
+    "highlights": ["Medvednica park", "Vrapče šuma", "Sljeme pristup"]
+  },
+  {
+    "id": "podsljeme",
+    "name": "Podsljeme",
+    "nameCroatian": "Podsljeme",
+    "centroid": { "lat": 45.8600, "lng": 15.9500 },
+    "bounds": [
+      { "lat": 45.8800, "lng": 15.9000 },
+      { "lat": 45.8800, "lng": 16.0100 },
+      { "lat": 45.8400, "lng": 16.0100 },
+      { "lat": 45.8400, "lng": 15.9000 }
+    ],
+    "character": "hillside-elite",
+    "greenScore": 10,
+    "transitScore": 4,
+    "quietScore": 10,
+    "costIndex": 7,
+    "description": "Vilinska četvrt na obroncima Medvednice. Najzeleniji i najtišnji kvart — kuće s vrtovima.",
+    "highlights": ["Medvednica park", "Sljeme žičara", "Šuma Podsljeme", "Gornja cesta"]
+  },
+  {
+    "id": "sesvete",
+    "name": "Sesvete",
+    "nameCroatian": "Sesvete",
+    "centroid": { "lat": 45.8300, "lng": 16.1200 },
+    "bounds": [
+      { "lat": 45.8700, "lng": 16.0800 },
+      { "lat": 45.8700, "lng": 16.1700 },
+      { "lat": 45.8000, "lng": 16.1700 },
+      { "lat": 45.8000, "lng": 16.0800 }
+    ],
+    "character": "suburban-town",
+    "greenScore": 6,
+    "transitScore": 5,
+    "quietScore": 7,
+    "costIndex": 3,
+    "description": "Zasebni grad unutar Zagreba. Pristupačne cijene, dobar auto-pristup, ali daleko od centra.",
+    "highlights": ["Sesvete centar", "Sesvete brdo", "Poslovna zona Sesvete"]
+  },
+  {
+    "id": "brezovica",
+    "name": "Brezovica",
+    "nameCroatian": "Brezovica",
+    "centroid": { "lat": 45.7500, "lng": 15.9000 },
+    "bounds": [
+      { "lat": 45.7700, "lng": 15.8500 },
+      { "lat": 45.7700, "lng": 15.9500 },
+      { "lat": 45.7300, "lng": 15.9500 },
+      { "lat": 45.7300, "lng": 15.8500 }
+    ],
+    "character": "rural",
+    "greenScore": 9,
+    "transitScore": 2,
+    "quietScore": 10,
+    "costIndex": 2,
+    "description": "Ruralna idila na jugu Zagreba. Polja, šume i mir — auto neophodan.",
+    "highlights": ["Kupinečki Kraljevec", "Šuma Brezovica", "Šumarija"]
+  }
+]

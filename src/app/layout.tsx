@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
+import Preloader from "@/components/Preloader";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  axes: ["SOFT", "WONK"],
+  weight: "variable",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-dm",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Zagreb Hackathon",
-  description: "Next.js 16 + Supabase + Claude + Mapbox boilerplate",
+  title: "Gdje Živjeti — Zagreb Neighborhood Intelligence",
+  description: "AI-powered neighborhood matchmaker + real-time komunalni radar za Zagreb. Pronađite pravi kvart za život.",
+  keywords: ["Zagreb", "stanovi", "kvartovi", "komunalni radovi", "AI", "pretraga"],
 };
 
 export default function RootLayout({
@@ -23,8 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="hr" suppressHydrationWarning>
+      <body className={`${fraunces.variable} ${dmSans.variable} antialiased font-[var(--font-dm)]`}>
+        <Preloader />
         {children}
       </body>
     </html>
