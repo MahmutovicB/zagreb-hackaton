@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ExternalLink, Building2, Home, Tag, MapPin } from 'lucide-react'
+import { X, ExternalLink, Building2, Home, Tag, MapPin, CalendarDays } from 'lucide-react'
 import type { NeighborhoodScore } from '@/types'
 import type { PlatformLink } from '@/lib/apartment-platforms'
+import { buildShortTermLinks } from '@/lib/apartment-platforms'
 
 interface ApartmentDrawerProps {
   neighborhood: NeighborhoodScore | null
@@ -16,7 +17,7 @@ interface ApartmentData {
   places: Array<{ name: string; vicinity: string; rating?: number; place_id: string }>
 }
 
-type Tab = 'rent' | 'sale'
+type Tab = 'rent' | 'sale' | 'shortterm'
 
 export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps) {
   const [data, setData] = useState<ApartmentData | null>(null)
@@ -40,7 +41,14 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
 
   const rentLinks = data?.platformLinks.filter(p => p.type === 'rent' || p.type === 'both') ?? []
   const saleLinks = data?.platformLinks.filter(p => p.type === 'sale' || p.type === 'both') ?? []
-  const activeLinks = tab === 'rent' ? rentLinks : saleLinks
+  const shortTermLinks = neighborhood ? buildShortTermLinks({
+    nameCroatian: neighborhood.nameCroatian,
+    id: neighborhood.id,
+    lat: neighborhood.centroid.lat,
+    lng: neighborhood.centroid.lng,
+  }) : []
+
+  const activeLinks = tab === 'rent' ? rentLinks : tab === 'sale' ? saleLinks : shortTermLinks
 
   const neighborhoodLinks = activeLinks.filter(p => p.scope === 'neighborhood')
   const zagrebLinks = activeLinks.filter(p => p.scope === 'zagreb')
@@ -83,10 +91,11 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
               </button>
             </div>
 
-            {/* Rent / Sale tabs */}
+            {/* Rent / Sale / Short-term tabs */}
             <div className="flex gap-1.5 px-5 py-3 border-b border-white/6 shrink-0">
               <TabBtn active={tab === 'rent'} onClick={() => setTab('rent')} icon={Home}>Najam</TabBtn>
               <TabBtn active={tab === 'sale'} onClick={() => setTab('sale')} icon={Tag}>Kupnja</TabBtn>
+              <TabBtn active={tab === 'shortterm'} onClick={() => setTab('shortterm')} icon={CalendarDays}>Booking</TabBtn>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-5 pt-3">
@@ -98,7 +107,25 @@ export function ApartmentDrawer({ neighborhood, onClose }: ApartmentDrawerProps)
                 </div>
               )}
 
-              {data && (
+              {tab === 'shortterm' && (
+                <>
+                  <section className="space-y-2">
+                    <SectionLabel icon={MapPin} color="#22c55e">
+                      Filtrirano za {neighborhood?.nameCroatian}
+                    </SectionLabel>
+                    {shortTermLinks.map((p, i) => (
+                      <PlatformCard key={p.id} platform={p} index={i} />
+                    ))}
+                  </section>
+                  <div className="rounded-xl bg-white/3 border border-white/6 px-4 py-3">
+                    <p className="text-[11px] text-white/40 leading-relaxed">
+                      Kratki boravak u ovom kvartu — savršena baza za nekoliko dana uživanja u Zagrebu, bez žurbe i s dobrim osjećajem za grad.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {data && tab !== 'shortterm' && (
                 <>
                   {/* Neighborhood-scoped platforms first */}
                   {neighborhoodLinks.length > 0 && (

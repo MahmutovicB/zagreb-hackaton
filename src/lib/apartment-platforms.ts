@@ -78,6 +78,41 @@ const CROZILLA_SLUGS: Record<string, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Build short-term rental links (Booking.com, Airbnb) for a given neighborhood
+// ---------------------------------------------------------------------------
+export function buildShortTermLinks(params: NeighborhoodSearchParams): PlatformLink[] {
+  const { nameCroatian, lat, lng } = params
+  const bookingQuery = encodeURIComponent(`${nameCroatian}, Zagreb, Croatia`)
+
+  return [
+    {
+      id: 'booking',
+      name: 'Booking.com',
+      tagline: `Apartmani — ${nameCroatian}`,
+      color: '#003580',
+      bgColor: 'rgba(0,53,128,0.12)',
+      logo: '🏨',
+      // nflt=ht_id%3D201 filters for apartments only
+      url: `https://www.booking.com/searchresults.html?ss=${bookingQuery}&nflt=ht_id%3D201`,
+      scope: 'neighborhood',
+      type: 'both',
+    },
+    {
+      id: 'airbnb',
+      name: 'Airbnb',
+      tagline: `Kratki najam — ${nameCroatian}`,
+      color: '#FF5A5F',
+      bgColor: 'rgba(255,90,95,0.10)',
+      logo: '🏡',
+      // Bounding box centred on neighborhood centroid (~1.2km radius)
+      url: `https://www.airbnb.com/s/homes?ne_lat=${(lat + 0.012).toFixed(6)}&ne_lng=${(lng + 0.018).toFixed(6)}&sw_lat=${(lat - 0.012).toFixed(6)}&sw_lng=${(lng - 0.018).toFixed(6)}&zoom_level=14`,
+      scope: 'neighborhood',
+      type: 'both',
+    },
+  ]
+}
+
+// ---------------------------------------------------------------------------
 // Build all platform links for a given neighborhood
 // ---------------------------------------------------------------------------
 export function buildPlatformLinks(params: NeighborhoodSearchParams): PlatformLink[] {
